@@ -31,7 +31,7 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Image Processing",
 ]
 dependencies = [
-  "numpy>=1.24",
+  "numpy>=2.2.6",
   "toml>=0.10",
   "torch>=2.5",
 ]
