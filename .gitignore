@@ -1,0 +1,36 @@
+# Python cache and build artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+build/
+dist/
+*.egg-info/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Tool caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+pytest-cache-files-*/
+.coverage
+coverage.xml
+htmlcov/
+
+# IDE and OS files
+.idea/
+.vscode/
+Thumbs.db
+.DS_Store
+
+# Local experiment outputs and large media
+outputs/
+artifacts/
+logs/
+*.bin
+*.yuv

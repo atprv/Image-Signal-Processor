@@ -1,0 +1,69 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "image-signal-processor"
+version = "0.1.0"
+description = "Automatic optimization (e2e) of neural network image processing algorithm parameters."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "atprv" }]
+keywords = [
+  "isp",
+  "image-signal-processing",
+  "computer-vision",
+  "optimization",
+  "deep-learning",
+  "pytorch",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Multimedia :: Graphics",
+  "Topic :: Scientific/Engineering :: Image Processing",
+]
+dependencies = [
+  "numpy>=1.24",
+  "toml>=0.10",
+  "torch>=2.5",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pre-commit>=4.0",
+  "pytest>=8.0",
+  "ruff>=0.15",
+]
+
+[project.scripts]
+traditional-isp = "scripts.run_traditional_isp:main"
+generate-synthetic-raw = "scripts.generate_synthetic_raw:main"
+
+[project.urls]
+Documentation = "docs/ARCHITECTURE.md"
+
+[tool.setuptools.packages.find]
+include = ["isp*", "scripts*"]
+
+[tool.pytest.ini_options]
+addopts = "-q -p no:cacheprovider"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "UP", "W"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

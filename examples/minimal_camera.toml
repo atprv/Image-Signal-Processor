@@ -1,0 +1,16 @@
+[img]
+width = 64
+height = 64
+emb_lines = [0, 0]
+
+[decompanding]
+black_level = 0
+compand_knee = [0, 16777215]
+compand_lut = [0, 4095]
+
+[ccm]
+ccm_matrix = [
+  [1.0, 0.0, 0.0],
+  [0.0, 1.0, 0.0],
+  [0.0, 0.0, 1.0],
+]
