@@ -70,10 +70,10 @@ class BayerDenoise(nn.Module):
         Apply denoise to a Bayer image.
 
         Args:
-            x: Bayer RGGB image, shape [H, W], float32 in [0, 0xFFFFFF]
+            x: Bayer RGGB image, shape [H, W], float32 in [0, 1]
 
         Returns:
-            torch.Tensor: Denoised image, shape [H, W], float32 in [0, 0xFFFFFF]
+            torch.Tensor: Denoised image, shape [H, W], float32 in [0, 1]
         """
         r = x[::2, ::2]
         gr = x[::2, 1::2]
@@ -95,4 +95,4 @@ class BayerDenoise(nn.Module):
         output[1::2, ::2] = gb_filtered
         output[1::2, 1::2] = b_filtered
 
-        return output
+        return output.clamp(0.0, 1.0)

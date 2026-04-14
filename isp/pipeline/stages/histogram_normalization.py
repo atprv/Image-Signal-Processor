@@ -5,7 +5,6 @@ import torch.nn as nn
 class HistogramNormalization(nn.Module):
     """
     Normalize luminance in the perceptual gamma-corrected domain.
-    A power curve shifts the mean, then an optional linear step matches contrast.
     """
 
     def __init__(self, target_mean: float = 0.0, target_std: float = 0.0):

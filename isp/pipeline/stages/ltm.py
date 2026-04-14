@@ -46,13 +46,32 @@ class LTM(nn.Module):
         self.register_buffer("eps_log", torch.tensor(1e-6, dtype=torch.float32))
         self.register_buffer("eps_scale", torch.tensor(1e-4, dtype=torch.float32))
 
-        kernel_size = 2 * radius + 1
+        self._rebuild_box_filters()
 
-        box_1d = torch.ones(1, 1, 1, kernel_size, dtype=torch.float32) / kernel_size
-        self.register_buffer("box_h", box_1d)  # Horizontal
-        self.register_buffer("box_v", box_1d.transpose(2, 3))  # Vertical
+    def _effective_radius(self) -> int:
+        """
+        Radius used inside the fast low-resolution path.
+        """
+        radius = int(self.radius)
+        if radius <= 0:
+            return 0
+        if self.downsample_factor < 1.0:
+            return max(1, int(round(radius * self.downsample_factor)))
+        return radius
 
-        self.pad = radius
+    def _rebuild_box_filters(self):
+        """
+        Rebuild separable box filters after radius/downsample changes.
+        """
+        effective_radius = self._effective_radius()
+        kernel_size = 2 * effective_radius + 1
+        box_1d = (
+            torch.ones(1, 1, 1, kernel_size, dtype=torch.float32, device=self.eps.device)
+            / kernel_size
+        )
+        self.register_buffer("box_h", box_1d)
+        self.register_buffer("box_v", box_1d.transpose(2, 3))
+        self.pad = effective_radius
 
     def _separable_box_filter(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -71,20 +90,20 @@ class LTM(nn.Module):
 
         return x_hv
 
-    def _fast_guided_filter(self, image: torch.Tensor) -> torch.Tensor:
+    def _fast_guided_filter(self, guide: torch.Tensor) -> torch.Tensor:
         """
         Fast guided filter with separable box filters.
 
         Args:
-            image: Input image [H, W]
+            guide: Input image [H, W]
 
         Returns:
             torch.Tensor: Filtered image [H, W]
         """
-        image_4d = image.unsqueeze(0).unsqueeze(0)
+        guide_4d = guide.unsqueeze(0).unsqueeze(0)
 
-        mean_I = self._separable_box_filter(image_4d)
-        mean_II = self._separable_box_filter(image_4d * image_4d)
+        mean_I = self._separable_box_filter(guide_4d)
+        mean_II = self._separable_box_filter(guide_4d * guide_4d)
 
         var_I = mean_II - mean_I * mean_I
 
@@ -94,7 +113,7 @@ class LTM(nn.Module):
         mean_a = self._separable_box_filter(a)
         mean_b = self._separable_box_filter(b)
 
-        out = mean_a * image_4d + mean_b
+        out = mean_a * guide_4d + mean_b
 
         return out.squeeze(0).squeeze(0)
 

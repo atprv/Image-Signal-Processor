@@ -8,7 +8,6 @@ import torch.nn.functional as F
 class Sharpening(nn.Module):
     """
     Unsharp mask sharpening with a noise threshold.
-    The soft threshold keeps flat areas from amplifying noise.
     """
 
     def __init__(self, amount: float = 0.8, radius: float = 1.0, threshold: float = 0.01):

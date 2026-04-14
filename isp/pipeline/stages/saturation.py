@@ -5,7 +5,6 @@ import torch.nn as nn
 class SaturationAdjust(nn.Module):
     """
     Adjust color saturation in the perceptual domain.
-    It scales each pixel's chroma relative to its luminance.
     """
 
     def __init__(self, saturation: float = 1.0):
@@ -14,7 +13,7 @@ class SaturationAdjust(nn.Module):
             saturation: Saturation factor. 1.0 keeps the image unchanged
         """
         super().__init__()
-        self.saturation = saturation
+        self.saturation = nn.Parameter(torch.tensor(float(saturation), dtype=torch.float32))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -23,9 +22,6 @@ class SaturationAdjust(nn.Module):
         Returns:
             torch.Tensor: Saturation-adjusted RGB [H, W, 3], float32 in [0, 1]
         """
-        if self.saturation == 1.0:
-            return x
-
         Y = 0.2126 * x[..., 0] + 0.7152 * x[..., 1] + 0.0722 * x[..., 2]
         Y = Y.unsqueeze(-1)
         x = Y + self.saturation * (x - Y)

@@ -57,3 +57,31 @@ def test_process_video_runs_end_to_end_on_cpu(minimal_config_path, tmp_path):
     assert output_path.exists()
     assert output_path.stat().st_size == 96
     assert stats["isp_fps"] >= 0
+
+
+def test_forward_diff_produces_gradients(minimal_config_path):
+    config = read_config(str(minimal_config_path), device="cpu")
+    pipeline = ISPPipeline(
+        config,
+        device="cpu",
+        denoise_radius=1,
+        ltm_radius=1,
+        ltm_downsample=1.0,
+        raw_y_blur_radius=1,
+        raw_y_blend=0.25,
+    )
+    raw_frame = (torch.rand((8, 8), dtype=torch.float32) * 4095.0).requires_grad_()
+
+    components = pipeline.forward_diff(raw_frame)
+
+    assert components["y"].shape == (1, 1, 8, 8)
+    assert components["uv"].shape == (1, 2, 4, 4)
+
+    loss = components["y"].mean() + components["uv"].mean()
+    loss.backward()
+
+    assert raw_frame.grad is not None
+    assert torch.isfinite(raw_frame.grad).all()
+    assert pipeline.ccm.ccm.grad is not None
+    assert pipeline.gamma.inv_gamma.grad is not None
+    assert pipeline.saturation_adjust.saturation.grad is not None

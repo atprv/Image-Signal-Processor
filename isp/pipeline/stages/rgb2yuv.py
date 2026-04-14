@@ -6,7 +6,6 @@ import torch.nn.functional as F
 class RGBtoYUV(nn.Module):
     """
     Convert RGB to NV12 YUV (4:2:0).
-    Supports optional raw-guided detail blending into the Y channel.
     """
 
     def __init__(self, raw_y_blend: float = 0.0, raw_y_blur_radius: int = 8):
@@ -46,22 +45,17 @@ class RGBtoYUV(nn.Module):
         x_h_padded = F.pad(x_h, (0, 0, r, r), mode="reflect")
         return F.conv2d(x_h_padded, self.box_v)
 
-    def forward(
+    def _compute_yuv420(
         self, x: torch.Tensor, raw_green: torch.Tensor = None, full_blend: float = 0.0
-    ) -> torch.Tensor:
+    ):
         """
-        Convert RGB to NV12 YUV.
-
-        Args:
-            x: RGB image, shape [H, W, 3], float32 in [0, 1]
-            raw_green: Optional RAW green channel [H, W], float32 in [0, 1]
-            full_blend: Full Y blend factor with raw_green in [0.0, 1.0]
+        Shared float computation for both forward and forward_components.
 
         Returns:
-            torch.Tensor: NV12 YUV frame as a 1D uint8 tensor
+            Y: float32 [H, W] in [0, 1]
+            U_420: float32 [H/2, W/2] centred around 0
+            V_420: float32 [H/2, W/2] centred around 0
         """
-        H, W, _ = x.shape
-
         yuv = x @ self.rgb2yuv_matrix.T
 
         Y = yuv[..., 0]
@@ -104,9 +98,49 @@ class RGBtoYUV(nn.Module):
         U_420 = F.avg_pool2d(U_4d, kernel_size=2, stride=2).squeeze()
         V_420 = F.avg_pool2d(V_4d, kernel_size=2, stride=2).squeeze()
 
-        Y_uint8 = (Y * 255.0).clamp_(0, 255).byte()
-        U_420_uint8 = (U_420 * 255.0 + 128.0).clamp_(0, 255).byte()
-        V_420_uint8 = (V_420 * 255.0 + 128.0).clamp_(0, 255).byte()
+        return Y, U_420, V_420
+
+    def forward_components(
+        self, x: torch.Tensor, raw_green: torch.Tensor = None, full_blend: float = 0.0
+    ) -> dict:
+        """
+        Differentiable float path for training.
+
+        Returns:
+            dict with:
+                y:  float32 [1, 1, H, W] in [0, 1]
+                uv: float32 [1, 2, H/2, W/2] in [0, 1] (U, V shifted to unsigned)
+        """
+        Y, U_420, V_420 = self._compute_yuv420(x, raw_green, full_blend)
+
+        U_unsigned = (U_420 + 128.0 / 255.0).clamp(0.0, 1.0)
+        V_unsigned = (V_420 + 128.0 / 255.0).clamp(0.0, 1.0)
+
+        y_out = Y.unsqueeze(0).unsqueeze(0)
+        uv_out = torch.stack([U_unsigned, V_unsigned], dim=0).unsqueeze(0)
+
+        return {"y": y_out, "uv": uv_out}
+
+    def forward(
+        self, x: torch.Tensor, raw_green: torch.Tensor = None, full_blend: float = 0.0
+    ) -> torch.Tensor:
+        """
+        Convert RGB to NV12 YUV.
+
+        Args:
+            x: RGB image, shape [H, W, 3], float32 in [0, 1]
+            raw_green: Optional RAW green channel [H, W], float32 in [0, 1]
+            full_blend: Full Y blend factor with raw_green in [0.0, 1.0]
+
+        Returns:
+            torch.Tensor: NV12 YUV frame as a 1D uint8 tensor
+        """
+        H, W, _ = x.shape
+        Y, U_420, V_420 = self._compute_yuv420(x, raw_green, full_blend)
+
+        Y_uint8 = (Y * 255.0).clamp(0, 255).byte()
+        U_420_uint8 = (U_420 * 255.0 + 128.0).clamp(0, 255).byte()
+        V_420_uint8 = (V_420 * 255.0 + 128.0).clamp(0, 255).byte()
 
         yuv_size = H * W + 2 * (H // 2) * (W // 2)
         yuv_out = torch.empty(yuv_size, dtype=torch.uint8, device=x.device)

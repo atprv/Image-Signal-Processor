@@ -14,8 +14,7 @@ class GammaCorrection(nn.Module):
         """
         super().__init__()
 
-        inv_gamma = 1.0 / gamma
-        self.register_buffer("inv_gamma", torch.tensor(inv_gamma, dtype=torch.float32))
+        self.inv_gamma = nn.Parameter(torch.tensor(1.0 / gamma, dtype=torch.float32))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -27,6 +26,6 @@ class GammaCorrection(nn.Module):
         Returns:
             torch.Tensor: Gamma-corrected image, shape [H, W, 3], float32 in [0, 1]
         """
-        output = x.pow(self.inv_gamma)
+        output = x.clamp(min=1e-6).pow(self.inv_gamma)
 
         return torch.clamp(output, 0.0, 1.0)

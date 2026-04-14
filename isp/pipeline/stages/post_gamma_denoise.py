@@ -6,7 +6,6 @@ import torch.nn.functional as F
 class PostGammaDenoise(nn.Module):
     """
     Guided-filter denoise on luma in the perceptual domain.
-    It removes noise boosted by brightness lift while keeping edges stable.
     """
 
     def __init__(self, radius: int = 0, eps: float = 0.005):
