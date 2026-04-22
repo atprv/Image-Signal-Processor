@@ -6,14 +6,12 @@ Drops raw patches and metadata to minimize file size.
 """
 
 import argparse
-import sys
 from pathlib import Path
-
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
 
 import h5py
 import numpy as np
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def pack(input_path, output_path, label):
