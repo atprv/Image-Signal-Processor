@@ -7,11 +7,13 @@ __pycache__/
 build/
 dist/
 *.egg-info/
+.ipynb_checkpoints/
 
 # Virtual environments
 .venv/
 venv/
 env/
+diploma_env/
 
 # Tool caches
 .pytest_cache/
@@ -32,5 +34,16 @@ Thumbs.db
 outputs/
 artifacts/
 logs/
+runs/
+git_export/
 *.bin
 *.yuv
+*.raw
+*.h5
+*.hdf5
+*.mp4
+*.avi
+*.pth
+*.pt
+*.ckpt
+*.zip

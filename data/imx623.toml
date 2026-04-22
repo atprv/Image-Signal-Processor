@@ -1,0 +1,14 @@
+[img]
+width = 1920
+height = 1559
+emb_lines = [ 1, 22 ]
+
+[decompanding]
+compand_knee = [ 0, 1024, 50176, 2147328, 15770624 ]
+compand_lut  = [ 0, 1024, 1408, 2432, 4095 ]
+black_level = 240
+sensor_bits = 24
+
+[ccm]
+ccm_matrix = [[1.6061, -0.45081, -0.15527], [-0.29631, 1.539, -0.2427], [0.034723, -0.5465, 1.5118]]
+
