@@ -2,18 +2,27 @@
 Recalculate baseline metrics for the current traditional ISP.
 """
 
-import sys
 import time
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
-
 import torch
 
-from isp.config.config_reader import read_config
-from isp.evaluation.evaluation_utils import evaluate
-from isp.pipeline.pipeline import ISPPipeline
+try:
+    from isp.config.config_reader import read_config
+    from isp.evaluation.evaluation_utils import evaluate
+    from isp.pipeline.pipeline import ISPPipeline
+except ModuleNotFoundError:
+    import sys
+
+    ROOT = Path(__file__).resolve().parents[1]
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+
+    from isp.config.config_reader import read_config
+    from isp.evaluation.evaluation_utils import evaluate
+    from isp.pipeline.pipeline import ISPPipeline
+
+ROOT = Path(__file__).resolve().parents[1]
 
 ISP_PARAMS_DAY = {
     "denoise_eps": 1e-12,
