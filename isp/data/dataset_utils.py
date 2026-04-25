@@ -7,17 +7,17 @@ from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 
 class ISPDataset(Dataset):
     """
-    Dataset для чтения патчей RAW / Y / UV из HDF5.
+    Dataset for reading RAW / Y / UV patches from HDF5.
 
     If the HDF5 file contains precomputed ISP outputs (y_isp, uv_isp),
-    they are returned directly — skipping ISP during training.
+    they are returned directly, skipping ISP during training.
     """
 
     def __init__(self, h5_path: str, return_meta: bool = True):
         """
         Args:
-            h5_path: путь к HDF5 файлу с патчами
-            return_meta: возвращать ли метаданные патча
+            h5_path: path to the HDF5 file with patches
+            return_meta: whether to return patch metadata
         """
         self.h5_path = str(h5_path)
         self.return_meta = return_meta

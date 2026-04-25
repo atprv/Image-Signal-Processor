@@ -30,20 +30,36 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Extract RAW/Y/UV patches for ISP training")
 
     parser.add_argument(
-        "--data-dir", type=str, default="data", help="Path to directory with RAW/YUV files"
+        "--data-dir",
+        type=str,
+        default="data",
+        help="Path to the directory with RAW/YUV files",
     )
     parser.add_argument(
-        "--config", type=str, default="data/imx623.toml", help="Path to camera config (TOML)"
+        "--config",
+        type=str,
+        default="data/imx623.toml",
+        help="Path to the camera config (TOML)",
     )
     parser.add_argument(
-        "--output-dir", type=str, default="dataset", help="Path to output dataset directory"
+        "--output-dir",
+        type=str,
+        default="dataset",
+        help="Path to the output dataset directory",
     )
     parser.add_argument("--patch-size", type=int, default=256, help="Patch size for RAW and Y")
     parser.add_argument("--stride", type=int, default=128, help="Sliding window stride")
     parser.add_argument(
-        "--debug-samples", type=int, default=3, help="Number of debug patch groups to save"
+        "--debug-samples",
+        type=int,
+        default=3,
+        help="Number of debug patch groups to save",
     )
-    parser.add_argument("--overwrite", action="store_true", help="Overwrite existing output files")
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Overwrite existing output files",
+    )
 
     return parser.parse_args()
 
@@ -104,7 +120,10 @@ def build_split_spec(data_dir: Path) -> dict[str, list[dict[str, object]]]:
 
 
 def build_patch_grid(
-    width: int, height: int, patch_size: int, stride: int
+    width: int,
+    height: int,
+    patch_size: int,
+    stride: int,
 ) -> list[tuple[int, int]]:
     if patch_size <= 0:
         raise ValueError(f"patch_size must be positive, got {patch_size}")
@@ -165,7 +184,10 @@ def create_h5_file(path: Path, total_patches: int, patch_size: int):
     )
     h5_file.create_dataset("scene_id", shape=(total_patches,), dtype=np.uint8, chunks=(chunk_rows,))
     h5_file.create_dataset(
-        "frame_idx", shape=(total_patches,), dtype=np.int32, chunks=(chunk_rows,)
+        "frame_idx",
+        shape=(total_patches,),
+        dtype=np.int32,
+        chunks=(chunk_rows,),
     )
     h5_file.create_dataset("x", shape=(total_patches,), dtype=np.int32, chunks=(chunk_rows,))
     h5_file.create_dataset("y", shape=(total_patches,), dtype=np.int32, chunks=(chunk_rows,))
@@ -236,8 +258,11 @@ def write_split(
                 RAWVideoReader(raw_path, config, device="cpu") as raw_reader,
                 NV12VideoReader(yuv_path, width, out_height, device="cpu") as yuv_reader,
             ):
-                frame_pairs = zip(raw_reader, yuv_reader, strict=False)
-                for (raw_frame, raw_number), (yuv_frame, yuv_number) in frame_pairs:
+                for (raw_frame, raw_number), (yuv_frame, yuv_number) in zip(
+                    raw_reader,
+                    yuv_reader,
+                    strict=True,
+                ):
                     if raw_number != yuv_number:
                         raise RuntimeError(f"RAW/YUV frame mismatch: {raw_number} vs {yuv_number}")
 
@@ -257,7 +282,8 @@ def write_split(
                     raw_batch = np.empty((per_frame_count, patch_side, patch_side), dtype=np.uint16)
                     y_batch = np.empty((per_frame_count, patch_side, patch_side), dtype=np.uint8)
                     uv_batch = np.empty(
-                        (per_frame_count, 2, patch_side // 2, patch_side // 2), dtype=np.uint8
+                        (per_frame_count, 2, patch_side // 2, patch_side // 2),
+                        dtype=np.uint8,
                     )
                     scene_batch = np.full((per_frame_count,), scene_id, dtype=np.uint8)
                     frame_batch = np.full((per_frame_count,), frame_idx, dtype=np.int32)
@@ -452,8 +478,10 @@ def main():
 
     patch_grid = build_patch_grid(width, out_height, args.patch_size, args.stride)
     print(f"Frame size after crop: {width}x{out_height}")
-    print(f"Patch size: {args.patch_size}, stride: {args.stride}")
-    print(f"Patches per frame: {len(patch_grid)}")
+    print(
+        f"Patch size: {args.patch_size}, stride: {args.stride}, "
+        f"patches per frame: {len(patch_grid)}"
+    )
     print_split_summary(split_spec, len(patch_grid))
 
     debug_collector: list[dict[str, object]] = []

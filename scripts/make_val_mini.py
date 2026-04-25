@@ -1,16 +1,5 @@
 """
 Extract only the val-split RAW/YUV frames into small "mini" scene files.
-
-Problem: free Drive only has 15 GB but the full scene files are ~19 GB.
-Day-13 training reads RAW/YUV scene files only during per-scene validation,
-and val uses just 25 specific frames (12 day + 13 night) out of hundreds.
-This script copies those frames into tiny scene files and writes a new
-splits file that points at them with consecutive frame indices.
-
-Outputs:
-  data/day_val_mini.bin, data/day_val_mini.yuv     (~125 MB)
-  data/night_val_mini.bin, data/night_val_mini.yuv (~135 MB)
-  dataset/splits_mini.json
 """
 
 import argparse
@@ -24,12 +13,10 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def raw_frame_size(width: int, height: int) -> int:
-    # 16-bit RAW, full height (emb lines included — stripped only at read time)
     return width * height * 2
 
 
 def yuv_frame_size(width: int, out_height: int) -> int:
-    # NV12 over the post-trim height (what NV12VideoReader expects)
     return int(width * out_height * 1.5)
 
 
@@ -51,9 +38,9 @@ def extract_frames(src_path: Path, dst_path: Path, frame_indices: list, frame_si
     return written
 
 
-def normalize_path(p: str) -> str:
+def normalize_path(path_str: str) -> str:
     """Windows-style 'data\\x.bin' -> 'data/x.bin' for cross-platform JSON."""
-    return p.replace("\\", "/")
+    return path_str.replace("\\", "/")
 
 
 def main():
@@ -69,10 +56,10 @@ def main():
     out_splits_path = ROOT / args.out_splits
     data_dir = ROOT / args.data_dir
 
-    with open(splits_path, encoding="utf-8") as f:
-        splits = json.load(f)
-    with open(config_path, "rb") as f:
-        cfg = tomllib.load(f)
+    with open(splits_path, encoding="utf-8") as file_handle:
+        splits = json.load(file_handle)
+    with open(config_path, "rb") as file_handle:
+        cfg = tomllib.load(file_handle)
 
     width = cfg["img"]["width"]
     height = cfg["img"]["height"]
@@ -122,27 +109,24 @@ def main():
         new_item["original_frame_indices"] = indices  # for traceability
         new_val_items.append(new_item)
 
-    # Build new splits: keep train/test sections intact (training uses H5 patches,
-    # not scene files; test is final test stage and not packed for Colab).
     new_splits = dict(splits)
     new_splits["splits"] = dict(splits["splits"])
     new_splits["splits"]["val"] = new_val_items
 
-    # Normalize slashes in train/test too so the JSON is cross-platform.
     for split_name in ("train", "test", "test_quick"):
         if split_name in new_splits["splits"]:
             new_splits["splits"][split_name] = [
                 {
-                    **it,
-                    "raw_path": normalize_path(it["raw_path"]),
-                    "yuv_path": normalize_path(it["yuv_path"]),
+                    **item,
+                    "raw_path": normalize_path(item["raw_path"]),
+                    "yuv_path": normalize_path(item["yuv_path"]),
                 }
-                for it in new_splits["splits"][split_name]
+                for item in new_splits["splits"][split_name]
             ]
 
     out_splits_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(out_splits_path, "w", encoding="utf-8") as f:
-        json.dump(new_splits, f, indent=2, ensure_ascii=False)
+    with open(out_splits_path, "w", encoding="utf-8") as file_handle:
+        json.dump(new_splits, file_handle, indent=2, ensure_ascii=False)
 
     print(f"\n{'=' * 60}")
     print(f"Total mini scene bytes: {total_bytes / 1e6:.1f} MB")
@@ -151,9 +135,9 @@ def main():
     print("  dataset/train_patches.h5")
     print(f"  dataset/{out_splits_path.name}")
     print("  data/imx623.toml")
-    for it in new_val_items:
-        print(f"  {it['raw_path']}")
-        print(f"  {it['yuv_path']}")
+    for item in new_val_items:
+        print(f"  {item['raw_path']}")
+        print(f"  {item['yuv_path']}")
     print("  artifacts/checkpoints/cnn_pretrained.pth")
 
 

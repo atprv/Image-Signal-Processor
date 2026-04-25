@@ -1,49 +1,75 @@
-# Python cache and build artifacts
+# personal journal
+diploma_tracker.html
+changed.md
+notes/
+git_export/
+
+# local docs
+docs/*
+!docs/ARCHITECTURE.md
+
+# Python
 __pycache__/
 *.py[cod]
-*.pyo
-*.pyd
+*$py.class
 *.so
+.Python
+*.egg
+*.egg-info/
+.eggs/
 build/
 dist/
-*.egg-info/
-.ipynb_checkpoints/
+develop-eggs/
+.installed.cfg
+MANIFEST
+pip-log.txt
+pip-delete-this-directory.txt
 
-# Virtual environments
-.venv/
+# virtualenvs
+diploma_env/
 venv/
 env/
-diploma_env/
+.venv/
+.env
 
-# Tool caches
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-pytest-cache-files-*/
-.coverage
-coverage.xml
-htmlcov/
-
-# IDE and OS files
-.idea/
+# editors / IDEs
 .vscode/
-Thumbs.db
-.DS_Store
+.idea/
+*.swp
+*.swo
+.spyderproject
+.spyproject
 
-# Local experiment outputs and large media
-outputs/
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Jupyter
+.ipynb_checkpoints/
+*-checkpoint.ipynb
+
+# pytest / coverage / mypy
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# local experiment outputs
 artifacts/
-logs/
-runs/
-git_export/
+
+# large data: dataset binaries and HDF5
+*.h5
+*.hdf5
 *.bin
 *.yuv
 *.raw
-*.h5
-*.hdf5
-*.mp4
-*.avi
 *.pth
-*.pt
-*.ckpt
-*.zip
+
+# Allow the small split JSON files inside dataset/.
+!dataset/splits*.json
+!dataset/*.md
