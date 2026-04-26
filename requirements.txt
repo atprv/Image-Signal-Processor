@@ -1,4 +1,10 @@
 # Install a matching PyTorch build first:
 # https://pytorch.org/get-started/locally/
+h5py>=3.10
+matplotlib>=3.8
 numpy>=1.24
+pandas>=2.0
+pillow>=10
+pyiqa>=0.1.13
 toml>=0.10
+tqdm>=4.66

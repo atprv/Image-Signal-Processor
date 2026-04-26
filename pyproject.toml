@@ -31,9 +31,12 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Image Processing",
 ]
 dependencies = [
+  "h5py>=3.10",
   "numpy>=1.24",
+  "pillow>=10",
   "toml>=0.10",
   "torch>=2.5",
+  "tqdm>=4.66",
 ]
 
 [project.optional-dependencies]
@@ -41,6 +44,19 @@ dev = [
   "pre-commit>=4.0",
   "pytest>=8.0",
   "ruff>=0.15",
+]
+research = [
+  "matplotlib>=3.8",
+  "pandas>=2.0",
+  "pyiqa>=0.1.13",
+]
+notebooks = [
+  "h5py>=3.10",
+  "matplotlib>=3.8",
+  "pandas>=2.0",
+  "pillow>=10",
+  "pyiqa>=0.1.13",
+  "tqdm>=4.66",
 ]
 
 [project.scripts]
@@ -51,18 +67,22 @@ generate-synthetic-raw = "scripts.generate_synthetic_raw:main"
 Documentation = "docs/ARCHITECTURE.md"
 
 [tool.setuptools.packages.find]
-include = ["isp*", "scripts*"]
+include = ["isp*", "metrics*", "scripts*"]
 
 [tool.pytest.ini_options]
 addopts = "-q -p no:cacheprovider"
 testpaths = ["tests"]
 
 [tool.ruff]
+extend-exclude = ["git_export", "notebooks"]
 line-length = 100
 target-version = "py310"
 
 [tool.ruff.lint]
 select = ["B", "E", "F", "I", "UP", "W"]
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/*.py" = ["E402"]
 
 [tool.ruff.format]
 quote-style = "double"

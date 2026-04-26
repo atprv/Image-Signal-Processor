@@ -423,8 +423,9 @@ def evaluate(
                     RAWVideoReader(str(raw_path), config, device=device) as raw_reader,
                     NV12VideoReader(str(yuv_path), width, out_height, device=device) as yuv_reader,
                 ):
-                    frame_pairs = zip(raw_reader, yuv_reader, strict=False)
-                    for (raw_frame, raw_number), (yuv_frame, yuv_number) in frame_pairs:
+                    for (raw_frame, raw_number), (yuv_frame, yuv_number) in zip(
+                        raw_reader, yuv_reader, strict=False
+                    ):
                         if raw_number != yuv_number:
                             raise RuntimeError(
                                 f"RAW/YUV frame mismatch in scene '{scene_name}': "

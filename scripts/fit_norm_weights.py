@@ -64,7 +64,6 @@ def main():
         nargs="+",
         default=["day", "night", "tunnel"],
         help="Which baseline scenes to include in the fit. "
-        "Day-13 val uses only day+night, so for a val-focused "
         "fit pass --scenes day night",
     )
     args = parser.parse_args()
