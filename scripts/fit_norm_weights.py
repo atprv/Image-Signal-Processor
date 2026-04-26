@@ -63,8 +63,10 @@ def main():
         "--scenes",
         nargs="+",
         default=["day", "night", "tunnel"],
-        help="Which baseline scenes to include in the fit. "
-        "fit pass --scenes day night",
+        help=(
+            "Which baseline scenes to include in the fit. "
+            "For a val-focused fit, pass --scenes day night."
+        ),
     )
     args = parser.parse_args()
 
