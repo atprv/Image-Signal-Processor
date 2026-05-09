@@ -28,9 +28,7 @@ def float_y_to_uint8(y_float: torch.Tensor) -> torch.Tensor:
 
 
 def unpack_nv12_buffer(
-    nv12: torch.Tensor,
-    width: int,
-    height: int,
+    nv12: torch.Tensor, width: int, height: int
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """
     Unpack a flat NV12 buffer into separate Y, U, V tensors.
@@ -61,8 +59,7 @@ def unpack_nv12_buffer(
 
 def yuv420_to_yuv444(y: torch.Tensor, uv: torch.Tensor) -> torch.Tensor:
     """
-    Upsample planar YUV420 (UV at half resolution) to YUV444 for per-pixel
-    processing (e.g., CNN residual head).
+    Upsample planar YUV420 to YUV444 for per-pixel processing.
     """
     uv_up = F.interpolate(uv, size=y.shape[2:], mode="bilinear", align_corners=False)
     return torch.cat([y, uv_up], dim=1)
@@ -122,15 +119,9 @@ def yuv420_to_rgb_bt709_full(y: torch.Tensor, uv: torch.Tensor) -> torch.Tensor:
     ).contiguous()
 
 
-def nv12_uint8_to_rgb_bt709_full(
-    y: torch.Tensor,
-    u: torch.Tensor,
-    v: torch.Tensor,
-) -> torch.Tensor:
+def nv12_uint8_to_rgb_bt709_full(y: torch.Tensor, u: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
     """
-    Convert separate uint8 Y/U/V planes (as unpacked from NV12) to RGB in
-    [0, 1]. Thin wrapper around yuv420_to_rgb_bt709_full for legacy eval
-    code paths that hold Y and UV as independent tensors.
+    Convert separate uint8 Y/U/V planes (as unpacked from NV12) to RGB in [0, 1].
 
     Args:
         y: [B, 1, H, W]    uint8 or float

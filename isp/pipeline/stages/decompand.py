@@ -78,6 +78,14 @@ class DecompandBlackLevel(nn.Module):
         """
         Internal differentiable path without output clamping.
         """
+        if (
+            (not self.training)
+            and (not torch.is_grad_enabled())
+            and (not torch.is_floating_point(x))
+        ):
+            idx = x.to(device=self.lut.device, dtype=torch.int64).clamp_(0, self.lut.numel() - 1)
+            return self.lut[idx]
+
         work_dtype = x.dtype if torch.is_floating_point(x) else torch.float32
 
         x_f = x.to(device=self.lut.device, dtype=work_dtype).clamp(

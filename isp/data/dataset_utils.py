@@ -88,8 +88,6 @@ class ISPDataset(Dataset):
         try:
             h5_file.close()
         except (AttributeError, TypeError, ValueError):
-            # During interpreter shutdown h5py internals may already be partially
-            # destroyed, so close() can fail even though the handle is no longer needed.
             pass
 
     def __del__(self):

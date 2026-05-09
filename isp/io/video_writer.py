@@ -1,4 +1,4 @@
-from queue import Empty, Queue
+from queue import Queue
 from threading import Thread
 
 import torch
@@ -9,7 +9,7 @@ class AsyncYUVWriter:
     Async writer for YUV files.
     """
 
-    def __init__(self, output_path: str, queue_size: int = 10):
+    def __init__(self, output_path: str, queue_size: int = 32):
         """
         Args:
             output_path: Path to the output YUV file
@@ -20,62 +20,57 @@ class AsyncYUVWriter:
         self.writer_thread = None
         self.is_running = False
         self.file_handle = None
-        self.worker_error = None
-
-    def _raise_worker_error(self):
-        """Re-raise exceptions captured by the writer thread."""
-        if self.worker_error is None:
-            return
-
-        error = self.worker_error
-        self.worker_error = None
-        raise RuntimeError("Async YUV writer failed.") from error
 
     def _writer_worker(self):
         """Worker thread for frame writing."""
-        try:
-            with open(self.output_path, "wb") as file_handle:
-                self.file_handle = file_handle
+        with open(self.output_path, "wb") as f:
+            self.file_handle = f
 
-                while self.is_running or not self.queue.empty():
-                    try:
-                        yuv_frame = self.queue.get(timeout=0.1)
-                    except Empty:
-                        continue
+            while self.is_running or not self.queue.empty():
+                try:
+                    queue_item = self.queue.get(timeout=0.1)
 
-                    if yuv_frame is None:
-                        self.queue.task_done()
+                    if queue_item is None:
                         break
+
+                    copy_done_event = None
+                    yuv_frame = queue_item
+                    if isinstance(queue_item, tuple):
+                        yuv_frame, copy_done_event = queue_item
+
+                    if copy_done_event is not None:
+                        copy_done_event.synchronize()
 
                     if yuv_frame.is_cuda:
                         yuv_frame = yuv_frame.cpu()
 
-                    file_handle.write(yuv_frame.numpy().tobytes())
+                    yuv_np = yuv_frame.numpy()
+                    f.write(memoryview(yuv_np))
+
                     self.queue.task_done()
-        except Exception as error:
-            self.worker_error = error
-        finally:
-            self.file_handle = None
+
+                except Exception:
+                    continue
+
+        self.file_handle = None
 
     def start(self):
         """Start the writer thread."""
         if self.is_running:
             return
 
-        self.worker_error = None
         self.is_running = True
         self.writer_thread = Thread(target=self._writer_worker, daemon=True)
         self.writer_thread.start()
 
-    def write(self, yuv_frame: torch.Tensor):
+    def write(self, yuv_frame):
         """
         Add a frame to the write queue.
 
         Args:
-            yuv_frame: NV12 YUV frame as a uint8 tensor
+            yuv_frame: NV12 YUV frame as a uint8 tensor, or
+                ``(tensor, cuda_event)`` for async GPU->CPU copies.
         """
-        self._raise_worker_error()
-
         if not self.is_running:
             raise RuntimeError("Writer not started. Call start() first.")
 
@@ -84,18 +79,13 @@ class AsyncYUVWriter:
     def finish(self):
         """Finish writing and wait for the worker thread."""
         if not self.is_running:
-            self._raise_worker_error()
             return
 
-        if self.writer_thread is not None and self.writer_thread.is_alive():
-            self.queue.put(None)
+        self.queue.put(None)
 
         self.is_running = False
         if self.writer_thread is not None:
             self.writer_thread.join()
-            self.writer_thread = None
-
-        self._raise_worker_error()
 
     def __enter__(self):
         self.start()
@@ -116,8 +106,9 @@ def save_yuv(yuv_frame: torch.Tensor, filename: str, append: bool = True):
     """
     mode = "ab" if append else "wb"
 
-    with open(filename, mode) as file_handle:
+    with open(filename, mode) as f:
         if yuv_frame.is_cuda:
             yuv_frame = yuv_frame.cpu()
 
-        file_handle.write(yuv_frame.numpy().tobytes())
+        yuv_np = yuv_frame.numpy()
+        f.write(memoryview(yuv_np))

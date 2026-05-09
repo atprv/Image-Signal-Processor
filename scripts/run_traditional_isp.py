@@ -160,9 +160,7 @@ def process_video(
 
 
 def main() -> int:
-    """
-    CLI entry point for the ISP pipeline.
-    """
+    """CLI entry point for the ISP pipeline."""
     parser = argparse.ArgumentParser(description="ISP Pipeline for RAW video processing")
 
     parser.add_argument("--video", type=str, required=True, help="Path to RAW video file")

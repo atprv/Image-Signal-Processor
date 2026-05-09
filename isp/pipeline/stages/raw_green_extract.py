@@ -6,7 +6,6 @@ import torch.nn.functional as F
 class RawGreenExtract(nn.Module):
     """
     Extract the green channel from Bayer RGGB and scale it to full resolution.
-    This is used for raw-guided Y blending.
     """
 
     def forward(self, bayer: torch.Tensor) -> torch.Tensor:

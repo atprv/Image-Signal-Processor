@@ -2,7 +2,6 @@
 diploma_tracker.html
 changed.md
 notes/
-git_export/
 
 # local docs
 docs/*
@@ -59,9 +58,6 @@ htmlcov/
 .dmypy.json
 dmypy.json
 
-# local experiment outputs
-artifacts/
-
 # large data: dataset binaries and HDF5
 *.h5
 *.hdf5
@@ -69,6 +65,7 @@ artifacts/
 *.yuv
 *.raw
 *.pth
+!artifacts/**/*.pth
 
 # Allow the small split JSON files inside dataset/.
 !dataset/splits*.json

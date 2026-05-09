@@ -17,19 +17,23 @@ class AWB(nn.Module):
     ):
         """
         Args:
-            max_gain: Maximum allowed gain
-            lum_mask_low: Lower luminance threshold for AWB stats
-            lum_mask_high: Upper luminance threshold
-            mask_temperature: Sigmoid steepness for soft masking
+            max_gain: Maximum allowed gain (trainable)
+            lum_mask_low: Lower luminance threshold for AWB stats (trainable)
+            lum_mask_high: Upper luminance threshold (trainable)
+            mask_temperature: Sigmoid steepness for soft masking (fixed)
             eps: Small constant for stable normalization and gain computation
         """
         super().__init__()
 
-        self.register_buffer("max_gain", torch.tensor(max_gain, dtype=torch.float32))
-        self.register_buffer("eps", torch.tensor(eps, dtype=torch.float32))
-        self.lum_mask_low = lum_mask_low
-        self.lum_mask_high = lum_mask_high
-        self.mask_temperature = mask_temperature
+        self.max_gain = nn.Parameter(torch.tensor(float(max_gain), dtype=torch.float32))
+        self.lum_mask_low = nn.Parameter(torch.tensor(float(lum_mask_low), dtype=torch.float32))
+        self.lum_mask_high = nn.Parameter(torch.tensor(float(lum_mask_high), dtype=torch.float32))
+
+        self.register_buffer(
+            "mask_temperature",
+            torch.tensor(float(mask_temperature), dtype=torch.float32),
+        )
+        self.register_buffer("eps", torch.tensor(float(eps), dtype=torch.float32))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -48,26 +52,19 @@ class AWB(nn.Module):
         gb = x[1::2, ::2]
         b = x[1::2, 1::2]
 
-        use_lum_mask = self.lum_mask_low > 0.0 or self.lum_mask_high < 1.0
+        g_avg = 0.5 * (gr + gb)
+        max_val = g_avg.max().clamp(min=self.eps)
+        g_norm = g_avg / max_val
 
-        if use_lum_mask:
-            g_avg = 0.5 * (gr + gb)
-            max_val = g_avg.max().clamp(min=self.eps)
-            g_norm = g_avg / max_val
+        t = self.mask_temperature
+        low_mask = torch.sigmoid(t * (g_norm - self.lum_mask_low))
+        high_mask = torch.sigmoid(t * (self.lum_mask_high - g_norm))
+        soft_mask = low_mask * high_mask
 
-            t = self.mask_temperature
-            low_mask = torch.sigmoid(t * (g_norm - self.lum_mask_low))
-            high_mask = torch.sigmoid(t * (self.lum_mask_high - g_norm))
-            soft_mask = low_mask * high_mask
-
-            mask_sum = soft_mask.sum().clamp(min=self.eps)
-            r_ref = (r * soft_mask).sum() / mask_sum
-            g_ref = 0.5 * ((gr * soft_mask).sum() / mask_sum + (gb * soft_mask).sum() / mask_sum)
-            b_ref = (b * soft_mask).sum() / mask_sum
-        else:
-            r_ref = r.mean()
-            g_ref = 0.5 * (gr.mean() + gb.mean())
-            b_ref = b.mean()
+        mask_sum = soft_mask.sum().clamp(min=self.eps)
+        r_ref = (r * soft_mask).sum() / mask_sum
+        g_ref = 0.5 * ((gr * soft_mask).sum() / mask_sum + (gb * soft_mask).sum() / mask_sum)
+        b_ref = (b * soft_mask).sum() / mask_sum
 
         r_gain = torch.clamp(g_ref / (r_ref + self.eps), 1.0 / self.max_gain, self.max_gain)
         b_gain = torch.clamp(g_ref / (b_ref + self.eps), 1.0 / self.max_gain, self.max_gain)

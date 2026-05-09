@@ -78,6 +78,65 @@ class Demosaic(nn.Module):
         )
 
         self.register_buffer("batched_kernels", batched_kernels)
+        self._mask_cache: dict[
+            tuple[int, int, torch.device, torch.dtype], tuple[torch.Tensor, ...]
+        ] = {}
+
+    @staticmethod
+    def _is_compiling() -> bool:
+        compiler = getattr(torch, "compiler", None)
+        is_compiling = getattr(compiler, "is_compiling", None)
+        if callable(is_compiling):
+            return bool(is_compiling())
+        dynamo = getattr(torch, "_dynamo", None)
+        dynamo_is_compiling = getattr(dynamo, "is_compiling", None)
+        if callable(dynamo_is_compiling):
+            return bool(dynamo_is_compiling())
+        return False
+
+    @staticmethod
+    def _build_pattern_masks(
+        H: int,
+        W: int,
+        device: torch.device,
+        dtype: torch.dtype,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        row_even = (torch.arange(H, device=device) % 2 == 0).to(dtype).unsqueeze(1)
+        col_even = (torch.arange(W, device=device) % 2 == 0).to(dtype).unsqueeze(0)
+        row_odd = 1.0 - row_even
+        col_odd = 1.0 - col_even
+
+        return (
+            row_even * col_even,
+            row_even * col_odd,
+            row_odd * col_even,
+            row_odd * col_odd,
+        )
+
+    def clear_runtime_cache(self) -> None:
+        self._mask_cache.clear()
+
+    def prime_runtime_cache(self, H: int, W: int, device: torch.device, dtype: torch.dtype) -> None:
+        """Build and store parity masks outside torch.compile()."""
+        key = (H, W, device, dtype)
+        if key not in self._mask_cache:
+            self._mask_cache[key] = self._build_pattern_masks(H, W, device, dtype)
+
+    def _get_pattern_masks(
+        self, H: int, W: int, device: torch.device, dtype: torch.dtype
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Cache the RGGB parity masks."""
+        key = (H, W, device, dtype)
+        cached = self._mask_cache.get(key)
+        if cached is not None:
+            return cached
+
+        if self._is_compiling():
+            return self._build_pattern_masks(H, W, device, dtype)
+
+        masks = self._build_pattern_masks(H, W, device, dtype)
+        self._mask_cache[key] = masks
+        return masks
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -100,15 +159,7 @@ class Demosaic(nn.Module):
         R_g_b = all_results[0, 2]
         R_b = all_results[0, 3]
 
-        row_even = (torch.arange(H, device=x.device) % 2 == 0).float().unsqueeze(1)
-        col_even = (torch.arange(W, device=x.device) % 2 == 0).float().unsqueeze(0)
-        row_odd = 1.0 - row_even
-        col_odd = 1.0 - col_even
-
-        m_R = row_even * col_even
-        m_Gr = row_even * col_odd
-        m_Gb = row_odd * col_even
-        m_B = row_odd * col_odd
+        m_R, m_Gr, m_Gb, m_B = self._get_pattern_masks(H, W, x.device, x.dtype)
 
         R = m_R * x + m_Gr * R_g_r + m_Gb * R_g_b + m_B * R_b
         G = (m_R + m_B) * G_interp + (m_Gr + m_Gb) * x

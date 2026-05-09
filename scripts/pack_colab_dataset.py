@@ -1,17 +1,16 @@
 """
 Pack a compact dataset for Google Colab training.
-
-Keeps only y_isp, uv_isp (float16), y_ref, uv_ref (uint8).
-Drops raw patches and metadata to minimize file size.
 """
 
 import argparse
+import sys
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 
 import h5py
 import numpy as np
-
-ROOT = Path(__file__).resolve().parents[1]
 
 
 def pack(input_path, output_path, label):
@@ -21,13 +20,11 @@ def pack(input_path, output_path, label):
         n = h5_in["y_isp"].shape[0]
 
         with h5py.File(output_path, "w") as h5_out:
-            # ISP outputs as float16
             y_isp = h5_in["y_isp"][:].astype(np.float16)
             uv_isp = h5_in["uv_isp"][:].astype(np.float16)
             h5_out.create_dataset("y_isp", data=y_isp, compression="gzip", compression_opts=1)
             h5_out.create_dataset("uv_isp", data=uv_isp, compression="gzip", compression_opts=1)
 
-            # References as uint8
             h5_out.create_dataset(
                 "y_ref", data=h5_in["y_ref"][:], compression="gzip", compression_opts=1
             )

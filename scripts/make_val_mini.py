@@ -38,9 +38,9 @@ def extract_frames(src_path: Path, dst_path: Path, frame_indices: list, frame_si
     return written
 
 
-def normalize_path(path_str: str) -> str:
+def normalize_path(p: str) -> str:
     """Windows-style 'data\\x.bin' -> 'data/x.bin' for cross-platform JSON."""
-    return path_str.replace("\\", "/")
+    return p.replace("\\", "/")
 
 
 def main():
@@ -56,10 +56,10 @@ def main():
     out_splits_path = ROOT / args.out_splits
     data_dir = ROOT / args.data_dir
 
-    with open(splits_path, encoding="utf-8") as file_handle:
-        splits = json.load(file_handle)
-    with open(config_path, "rb") as file_handle:
-        cfg = tomllib.load(file_handle)
+    with open(splits_path, encoding="utf-8") as f:
+        splits = json.load(f)
+    with open(config_path, "rb") as f:
+        cfg = tomllib.load(f)
 
     width = cfg["img"]["width"]
     height = cfg["img"]["height"]
@@ -106,7 +106,7 @@ def main():
         new_item["raw_path"] = normalize_path(str(dst_raw.relative_to(ROOT)))
         new_item["yuv_path"] = normalize_path(str(dst_yuv.relative_to(ROOT)))
         new_item["frame_indices"] = list(range(n))
-        new_item["original_frame_indices"] = indices  # for traceability
+        new_item["original_frame_indices"] = indices
         new_val_items.append(new_item)
 
     new_splits = dict(splits)
@@ -117,16 +117,16 @@ def main():
         if split_name in new_splits["splits"]:
             new_splits["splits"][split_name] = [
                 {
-                    **item,
-                    "raw_path": normalize_path(item["raw_path"]),
-                    "yuv_path": normalize_path(item["yuv_path"]),
+                    **it,
+                    "raw_path": normalize_path(it["raw_path"]),
+                    "yuv_path": normalize_path(it["yuv_path"]),
                 }
-                for item in new_splits["splits"][split_name]
+                for it in new_splits["splits"][split_name]
             ]
 
     out_splits_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(out_splits_path, "w", encoding="utf-8") as file_handle:
-        json.dump(new_splits, file_handle, indent=2, ensure_ascii=False)
+    with open(out_splits_path, "w", encoding="utf-8") as f:
+        json.dump(new_splits, f, indent=2, ensure_ascii=False)
 
     print(f"\n{'=' * 60}")
     print(f"Total mini scene bytes: {total_bytes / 1e6:.1f} MB")
@@ -135,9 +135,9 @@ def main():
     print("  dataset/train_patches.h5")
     print(f"  dataset/{out_splits_path.name}")
     print("  data/imx623.toml")
-    for item in new_val_items:
-        print(f"  {item['raw_path']}")
-        print(f"  {item['yuv_path']}")
+    for it in new_val_items:
+        print(f"  {it['raw_path']}")
+        print(f"  {it['yuv_path']}")
     print("  artifacts/checkpoints/cnn_pretrained.pth")
 
 
