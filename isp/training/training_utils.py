@@ -12,9 +12,7 @@ from isp.evaluation.evaluation_utils import (
 
 
 def _infer_module_device(*modules, default: str = "cpu") -> torch.device:
-    """
-    Infer device from module parameters or buffers.
-    """
+    """Infer device from module parameters or buffers."""
     for module in modules:
         if module is None:
             continue
@@ -31,9 +29,7 @@ def _infer_module_device(*modules, default: str = "cpu") -> torch.device:
 
 
 def _move_batch_to_device(batch: dict[str, Any], device: torch.device) -> dict[str, Any]:
-    """
-    Move tensor values in a batch dict to the target device.
-    """
+    """Move tensor values in a batch dict to the target device."""
     moved_batch: dict[str, Any] = {}
     for key, value in batch.items():
         if torch.is_tensor(value):
@@ -44,9 +40,7 @@ def _move_batch_to_device(batch: dict[str, Any], device: torch.device) -> dict[s
 
 
 def _ensure_raw_12bit(raw_batch: torch.Tensor) -> torch.Tensor:
-    """
-    Convert RAW batch to 12-bit sensor range [0, 4095].
-    """
+    """Convert RAW batch to 12-bit sensor range [0, 4095]."""
     if raw_batch.ndim != 4 or raw_batch.shape[1] != 1:
         raise ValueError(
             f"Expected RAW batch with shape [B, 1, H, W], got {tuple(raw_batch.shape)}"
@@ -62,14 +56,31 @@ def _ensure_raw_12bit(raw_batch: torch.Tensor) -> torch.Tensor:
     return raw_12bit.clamp(0.0, 4095.0)
 
 
-TRAINABLE_ISP_PARAM_KEYS = {"ccm_matrix", "gamma", "saturation"}
+TRAINABLE_ISP_PARAM_KEYS = {
+    "ccm_matrix",
+    "gamma",
+    "awb_max_gain",
+    "awb_lum_mask_low",
+    "awb_lum_mask_high",
+    "denoise_eps",
+    "ltm_a",
+    "ltm_b",
+    "ltm_eps",
+    "ltm_target_mean",
+    "ltm_detail_gain",
+    "ltm_detail_threshold",
+    "hist_target_mean",
+    "hist_target_std",
+    "sharp_amount",
+    "sharp_threshold",
+    "raw_y_blend",
+    "raw_y_full_blend",
+    "post_denoise_eps",
+}
 
 
 def _apply_scene_params_preserving_trainables(isp, scene_params: dict | None):
-    """
-    Apply scene-specific non-differentiable ISP knobs without overwriting the
-    shared trainable CCM/gamma/saturation parameters.
-    """
+    """Apply scene-specific structural ISP knobs."""
     if not scene_params:
         return
     non_trainable = {
@@ -80,9 +91,7 @@ def _apply_scene_params_preserving_trainables(isp, scene_params: dict | None):
 
 
 def _run_isp_batch(isp, raw_12bit_batch: torch.Tensor) -> dict[str, torch.Tensor]:
-    """
-    Run ISP frame-by-frame on a batch of RAW patches.
-    """
+    """Run ISP frame-by-frame on a batch of RAW patches."""
     if raw_12bit_batch.ndim != 4 or raw_12bit_batch.shape[1] != 1:
         raise ValueError(
             f"Expected RAW batch with shape [B, 1, H, W], got {tuple(raw_12bit_batch.shape)}"
@@ -109,9 +118,7 @@ def _run_isp_batch(isp, raw_12bit_batch: torch.Tensor) -> dict[str, torch.Tensor
 
 
 def forward_isp_cnn(isp, cnn, raw_batch: torch.Tensor) -> dict[str, torch.Tensor]:
-    """
-    Run RAW -> ISP -> CNN residual correction for a batch of patches.
-    """
+    """Run RAW -> ISP -> CNN for a batch of patches."""
     if raw_batch.ndim != 4 or raw_batch.shape[1] != 1:
         raise ValueError(
             f"Expected RAW batch with shape [B, 1, H, W], got {tuple(raw_batch.shape)}"
@@ -151,9 +158,7 @@ def compute_proxy_loss(
     pattern: str,
     lambda_uv: float = 1.0,
 ) -> dict[str, torch.Tensor]:
-    """
-    Compute differentiable proxy loss and VIF monitoring metric.
-    """
+    """Compute differentiable proxy loss and VIF monitoring metric."""
     raw_12bit = _ensure_raw_12bit(raw_batch)
 
     l1_y = F.l1_loss(y_pred, y_ref)
@@ -189,9 +194,7 @@ def _get_grad_mean(parameter: torch.nn.Parameter | None) -> float | None:
 def train_step(
     isp, cnn, optimizer, batch: dict[str, Any], pattern: str, lambda_uv: float = 1.0
 ) -> dict[str, float]:
-    """
-    Run one optimization step for CNN on top of fixed ISP outputs.
-    """
+    """Run one optimization step for CNN on top of fixed ISP outputs."""
     if optimizer is None:
         raise ValueError("optimizer must not be None")
 
@@ -232,6 +235,8 @@ def train_step(
     tail_grad = _get_grad_mean(cnn.tail.weight if hasattr(cnn, "tail") else None)
 
     optimizer.step()
+    if hasattr(isp, "project_trainable_params_"):
+        isp.project_trainable_params_()
 
     return {
         "loss": float(loss.item()),
@@ -250,9 +255,7 @@ def _run_isp_batch_diff(
     scene_ids: torch.Tensor | None = None,
     scene_params_by_id: dict[int, dict] | None = None,
 ) -> dict[str, torch.Tensor]:
-    """
-    Run ISP frame-by-frame using forward_diff so gradients reach ISP parameters.
-    """
+    """Run ISP frame-by-frame using forward_diff so gradients reach ISP parameters."""
     if raw_12bit_batch.ndim != 4 or raw_12bit_batch.shape[1] != 1:
         raise ValueError(
             f"Expected RAW batch with shape [B, 1, H, W], got {tuple(raw_12bit_batch.shape)}"
@@ -293,9 +296,7 @@ def forward_isp_cnn_diff(
     scene_ids: torch.Tensor | None = None,
     scene_params_by_id: dict[int, dict] | None = None,
 ) -> dict[str, torch.Tensor]:
-    """
-    Differentiable RAW -> ISP -> CNN forward path. Gradients flow into both.
-    """
+    """Differentiable RAW -> ISP -> CNN forward path. Gradients flow into both."""
     if raw_batch.ndim != 4 or raw_batch.shape[1] != 1:
         raise ValueError(
             f"Expected RAW batch with shape [B, 1, H, W], got {tuple(raw_batch.shape)}"
@@ -331,16 +332,52 @@ def forward_isp_cnn_diff(
     }
 
 
+_CONTINUOUS_PARAMS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("ltm_a", ("ltm", "a")),
+    ("ltm_b", ("ltm", "b")),
+    ("ltm_target_mean", ("ltm", "target_mean")),
+    ("ltm_detail_threshold", ("ltm", "detail_threshold")),
+    ("hist_target_mean", ("hist_norm", "target_mean")),
+    ("hist_target_std", ("hist_norm", "target_std")),
+    ("sharp_amount", ("sharpening", "amount")),
+    ("sharp_threshold", ("sharpening", "threshold")),
+    ("raw_y_blend", ("rgb2yuv", "raw_y_blend")),
+    ("raw_y_full_blend", ("rgb2yuv", "raw_y_full_blend")),
+    ("awb_lum_mask_low", ("awb", "lum_mask_low")),
+    ("awb_lum_mask_high", ("awb", "lum_mask_high")),
+)
+
+_GAIN_PARAMS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("ltm_detail_gain", ("ltm", "detail_gain")),
+    ("awb_max_gain", ("awb", "max_gain")),
+)
+
+_LOG_EPS_PARAMS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("ltm_eps", ("ltm", "eps")),
+    ("post_denoise_eps", ("post_denoise", "eps")),
+    ("denoise_eps", ("denoise", "eps")),
+)
+
+
+def _resolve_attr(isp, path: tuple[str, ...]):
+    obj = isp
+    for name in path:
+        if not hasattr(obj, name):
+            return None
+        obj = getattr(obj, name)
+    return obj
+
+
 def compute_isp_anchor_loss(
     isp,
     anchor_params: dict[str, Any],
     gamma_scale: float = 0.1,
-    saturation_scale: float = 0.1,
     ccm_scale: float = 0.05,
+    continuous_scale: float = 0.1,
+    gain_scale: float = 10.0,
+    eps_log_scale: float = 1.0,
 ) -> torch.Tensor:
-    """
-    Penalize drift of the trainable ISP parameters from their initial values.
-    """
+    """Penalize drift of every trainable ISP parameter from its initial value."""
     device = isp.ccm.ccm.device
     dtype = isp.ccm.ccm.dtype
     terms = []
@@ -363,16 +400,46 @@ def compute_isp_anchor_loss(
         current_gamma = 1.0 / isp.gamma.inv_gamma.clamp_min(1e-6)
         terms.append(F.mse_loss(current_gamma / gamma_scale, target_gamma / gamma_scale))
 
-    if "saturation" in anchor_params and hasattr(isp, "saturation_adjust"):
-        target_saturation = torch.as_tensor(
-            float(anchor_params["saturation"]),
+    def _add_linear_term(anchor_key: str, attr_path: tuple[str, ...], scale: float):
+        if scale <= 0 or anchor_key not in anchor_params:
+            return
+        param = _resolve_attr(isp, attr_path)
+        if param is None:
+            return
+        target = torch.as_tensor(
+            float(anchor_params[anchor_key]),
             device=device,
             dtype=dtype,
         )
-        current_saturation = isp.saturation_adjust.saturation
-        terms.append(
-            F.mse_loss(current_saturation / saturation_scale, target_saturation / saturation_scale)
+        terms.append(F.mse_loss(param / scale, target / scale))
+
+    def _add_log_term(anchor_key: str, attr_path: tuple[str, ...], scale: float):
+        if scale <= 0 or anchor_key not in anchor_params:
+            return
+        param = _resolve_attr(isp, attr_path)
+        if param is None:
+            return
+        anchor_value = float(anchor_params[anchor_key])
+        if anchor_value <= 0.0:
+            return
+        log_param = torch.log(param.clamp(min=1e-20))
+        log_target = torch.log(
+            torch.as_tensor(
+                anchor_value,
+                device=device,
+                dtype=dtype,
+            )
         )
+        terms.append(F.mse_loss(log_param / scale, log_target / scale))
+
+    for anchor_key, attr_path in _CONTINUOUS_PARAMS:
+        _add_linear_term(anchor_key, attr_path, continuous_scale)
+
+    for anchor_key, attr_path in _GAIN_PARAMS:
+        _add_linear_term(anchor_key, attr_path, gain_scale)
+
+    for anchor_key, attr_path in _LOG_EPS_PARAMS:
+        _add_log_term(anchor_key, attr_path, eps_log_scale)
 
     if not terms:
         return torch.zeros((), device=device, dtype=dtype)
@@ -391,18 +458,20 @@ def e2e_train_step(
     isp_anchor_params: dict[str, Any] | None = None,
     isp_reg_weight: float = 0.0,
     isp_reg_gamma_scale: float = 0.1,
-    isp_reg_saturation_scale: float = 0.1,
     isp_reg_ccm_scale: float = 0.05,
+    isp_reg_continuous_scale: float = 0.1,
+    isp_reg_gain_scale: float = 10.0,
+    isp_reg_eps_log_scale: float = 1.0,
     scene_params_by_id: dict[int, dict] | None = None,
     scene_loss_weights_by_id: dict[int, float] | None = None,
 ) -> dict[str, float | None]:
     """
-    Run one E2E optimization step where gradients reach BOTH ISP and CNN.
+    Run one E2E optimization step where gradients reach both ISP and CNN.
 
     Args:
-        loss_type: 'proxy'  -> L1(Y) + lambda_uv * L1(UV)
+        loss_type: 'proxy'   -> L1(Y) + lambda_uv * L1(UV)
                    'quality' -> -w_ssim*MS_SSIM - w_vif*VIF - w_unique*UNIQUE
-                                + w_uv*L1(UV)
+                                + w_uv*L1(UV)  (eval-aligned)
         quality_weights: QualityLossWeights; used only when loss_type=='quality'.
                          None defaults per the dataclass.
         lambda_uv: for 'proxy' loss: L1(UV) weight. For 'quality' loss: overrides
@@ -567,8 +636,10 @@ def e2e_train_step(
             isp=isp,
             anchor_params=isp_anchor_params,
             gamma_scale=isp_reg_gamma_scale,
-            saturation_scale=isp_reg_saturation_scale,
             ccm_scale=isp_reg_ccm_scale,
+            continuous_scale=isp_reg_continuous_scale,
+            gain_scale=isp_reg_gain_scale,
+            eps_log_scale=isp_reg_eps_log_scale,
         )
         (float(isp_reg_weight) * isp_anchor_reg).backward()
         loss = loss + float(isp_reg_weight) * isp_anchor_reg
@@ -583,13 +654,10 @@ def e2e_train_step(
 
     isp_ccm_grad = _get_grad_mean(isp.ccm.ccm) if hasattr(isp, "ccm") else None
     isp_gamma_grad = _get_grad_mean(isp.gamma.inv_gamma) if hasattr(isp, "gamma") else None
-    isp_saturation_grad = (
-        _get_grad_mean(isp.saturation_adjust.saturation)
-        if hasattr(isp, "saturation_adjust")
-        else None
-    )
 
     optimizer.step()
+    if hasattr(isp, "project_trainable_params_"):
+        isp.project_trainable_params_()
 
     return {
         "loss": float(loss.item()),
@@ -604,7 +672,6 @@ def e2e_train_step(
         "tail_grad_mean": tail_grad,
         "isp_ccm_grad_mean": isp_ccm_grad,
         "isp_gamma_grad_mean": isp_gamma_grad,
-        "isp_saturation_grad_mean": isp_saturation_grad,
     }
 
 
@@ -617,9 +684,7 @@ def overfit_one_batch(
     lr: float = 1e-3,
     lambda_uv: float = 1.0,
 ) -> list[dict[str, float]]:
-    """
-    Overfit CNN on one batch to verify trainability.
-    """
+    """Overfit CNN on one batch to verify trainability."""
     if steps <= 0:
         raise ValueError(f"steps must be positive, got {steps}")
     if lr <= 0:

@@ -3,9 +3,7 @@ import torch.nn as nn
 
 
 def count_trainable_parameters(model: nn.Module) -> int:
-    """
-    Count trainable parameters in a model.
-    """
+    """Count trainable parameters in a model."""
     return sum(parameter.numel() for parameter in model.parameters() if parameter.requires_grad)
 
 
@@ -110,10 +108,7 @@ class ResidualCNN(nn.Module):
         self._init_tail_for_residual_start()
 
     def _init_tail_for_residual_start(self):
-        """
-        Initialize the tail so that the network starts close to identity,
-        while gradients can still flow through the whole network.
-        """
+        """Initialize the tail so that the network starts close to identity."""
         nn.init.normal_(self.tail.weight, mean=0.0, std=1e-3)
         if self.tail.bias is not None:
             nn.init.zeros_(self.tail.bias)

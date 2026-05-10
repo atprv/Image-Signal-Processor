@@ -1,5 +1,5 @@
 """
-Quality-aligned differentiable loss for E2E ISP training.
+Quality-aligned differentiable loss for end-to-end ISP+CNN training.
 """
 
 import os
@@ -32,13 +32,20 @@ except ModuleNotFoundError:
 
 @dataclass
 class QualityLossWeights:
-    """Weights for the quality-aligned loss. Positive = stronger pressure."""
+    """
+    Weights for the quality-aligned loss. Positive = stronger pressure.
+    """
 
     w_ssim: float = 1.0
-    w_vif: float = 0.3
-    w_unique: float = 0.1
+    w_vif: float = 5.0
+    w_unique: float = 0.3
     w_l1_y: float = 0.0
     w_uv: float = 1.0
+
+    w_vif_floor: float = 50.0
+    vif_target: float = 0.7
+    w_unique_floor: float = 10.0
+    unique_target: float = 0.0
 
 
 def _weighted_mean(
@@ -62,9 +69,7 @@ _METRIC_CACHE: dict[str, dict[str, object]] = {}
 
 
 def _get_pyiqa_metric(name: str, device: torch.device):
-    """
-    Return a cached pyiqa metric instance for (name, device).
-    """
+    """Return a cached pyiqa metric instance for (name, device)."""
     if pyiqa is None:
         raise ModuleNotFoundError(
             "pyiqa is required for quality_loss (MS_SSIM / UNIQUE). "
@@ -123,8 +128,7 @@ def compute_quality_loss(
     sample_weights: torch.Tensor | None = None,
 ) -> dict[str, torch.Tensor]:
     """
-    Differentiable quality-aligned loss. Signature mirrors compute_proxy_loss
-    so it can be dropped into e2e_train_step.
+    Differentiable quality-aligned loss.
 
     Args:
         raw_batch:  [B, 1, H, W] RAW CFA (accepted in [0,1] or [0,4095])
@@ -133,7 +137,8 @@ def compute_quality_loss(
         y_ref:      [B, 1, H, W] float in [0, 1]
         uv_ref:     [B, 2, H/2, W/2] float in [0, 1]
         pattern:    CFA pattern for teacher's VIF
-        weights:    QualityLossWeights instance
+        weights:    QualityLossWeights instance; defaults to the tuned
+                    quality-loss weights used during E2E training.
         lambda_uv:  [deprecated] if set, overrides weights.w_uv (for compat
                     with call sites still passing lambda_uv=...).
         sample_weights: optional [B] scene/sample weights. Used for all
@@ -178,12 +183,30 @@ def compute_quality_loss(
     l1_y_per = F.l1_loss(y_pred, y_ref, reduction="none")
     l1_y = _weighted_mean(l1_y_per, sample_weights)
 
+    vif_floor_w = float(w.w_vif_floor)
+    vif_target = float(w.vif_target)
+    if vif_floor_w > 0.0:
+        vif_deficit_per = F.relu(vif_target - vif_per).pow(2).to(loss_dtype)
+        vif_floor_term = _weighted_mean(vif_deficit_per, sample_weights)
+    else:
+        vif_floor_term = vif_val.new_zeros(())
+
+    unique_floor_w = float(w.w_unique_floor)
+    unique_target = float(w.unique_target)
+    if unique_floor_w > 0.0:
+        unique_deficit_per = F.relu(unique_target - unique_per).pow(2).to(loss_dtype)
+        unique_floor_term = _weighted_mean(unique_deficit_per, sample_weights)
+    else:
+        unique_floor_term = unique_val.new_zeros(())
+
     loss = (
         -float(w.w_ssim) * ms_ssim_val
         - float(w.w_vif) * vif_val
         - float(w.w_unique) * unique_val
         + float(w.w_l1_y) * l1_y
         + float(w.w_uv) * l1_uv
+        + vif_floor_w * vif_floor_term
+        + unique_floor_w * unique_floor_term
     )
 
     return {
@@ -193,4 +216,6 @@ def compute_quality_loss(
         "vif": vif_val.detach(),
         "l1_y": l1_y.detach(),
         "l1_uv": l1_uv.detach(),
+        "vif_floor": vif_floor_term.detach(),
+        "unique_floor": unique_floor_term.detach(),
     }
