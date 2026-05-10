@@ -1,0 +1,39 @@
+Baseline metrics (per-scene ISP params, VIF even=False)
+
+Run info
+- device: cpu
+- config: data/imx623.toml
+- frames: 1 per scene (day, night, tunnel)
+- VIF: even=False
+- elapsed: 832.8s
+
+Aggregate (mean over 3 scenes)
+- l1_y: 0.053672
+- l1_uv: 0.012882
+- vif: 0.625310
+- nrqm: 6.911174
+- unique: 0.089003
+
+Per-scene: day
+- isp_params: {'denoise_eps': 1e-12, 'ltm_a': 0.5, 'ltm_detail_gain': 30, 'ltm_detail_threshold': 0.35, 'hist_target_mean': 0.445, 'hist_target_std': 0.162, 'post_denoise_radius': 4, 'post_denoise_eps': 0.001, 'raw_y_full_blend': 0.4, 'sharp_amount': 0.3}
+- l1_y: 0.048800
+- l1_uv: 0.019984
+- vif: 0.705400
+- nrqm: 5.054805
+- unique: 0.113144
+
+Per-scene: night
+- isp_params: {'denoise_eps': 1e-12, 'ltm_a': 0.3, 'ltm_detail_gain': 8, 'ltm_detail_threshold': 0.4, 'sharp_amount': 0.8}
+- l1_y: 0.053363
+- l1_uv: 0.009226
+- vif: 0.557873
+- nrqm: 8.396557
+- unique: 0.164435
+
+Per-scene: tunnel
+- isp_params: {'denoise_eps': 1e-12, 'ltm_a': 0.5, 'ltm_detail_gain': 30, 'ltm_detail_threshold': 0.35, 'hist_target_mean': 0.445, 'hist_target_std': 0.162, 'post_denoise_radius': 4, 'post_denoise_eps': 0.001, 'raw_y_full_blend': 0.4, 'sharp_amount': 0.3}
+- l1_y: 0.058852
+- l1_uv: 0.009436
+- vif: 0.612656
+- nrqm: 7.282162
+- unique: -0.010569

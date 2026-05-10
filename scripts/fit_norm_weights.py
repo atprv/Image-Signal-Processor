@@ -1,53 +1,22 @@
 """
-Fit and freeze the (a, b) coefficients for the composite quality score.
+Fit and freeze the ``(a, b)`` coefficients for the composite quality score.
 """
 
 import argparse
 import json
 from pathlib import Path
 
+from isp.evaluation.baseline_io import load_baseline_metrics_txt
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
-BASELINE_PER_SCENE = {
-    "day": {
-        "vif": 0.702358,
-        "nrqm": 5.227967,
-        "unique": 0.124453,
-        "isp_params": {
-            "ltm_a": 0.5,
-            "ltm_detail_gain": 30,
-            "ltm_detail_threshold": 0.35,
-            "hist_target_mean": 0.445,
-            "hist_target_std": 0.162,
-            "post_denoise_radius": 4,
-            "post_denoise_eps": 0.001,
-            "raw_y_full_blend": 0.4,
-            "sharp_amount": 0.3,
-            "saturation": 1.2,
-        },
-    },
-    "night": {
-        "vif": 0.519090,
-        "nrqm": 7.075381,
-        "unique": 0.135025,
-        "isp_params": {
-            "ltm_a": 0.3,
-            "ltm_detail_gain": 8,
-            "ltm_detail_threshold": 0.4,
-            "sharp_amount": 0.8,
-        },
-    },
-    "tunnel": {
-        "vif": 0.693219,
-        "nrqm": 6.870870,
-        "unique": 0.076290,
-        "isp_params": {},
-    },
-}
+NRQM_RANGE_MAX = 10.0
+UNIQUE_RANGE_MAX = 3.0
+COMPOSITE_MODE = "theoretical_range_scaled"
 
 
-def round_sig(x: float, sig: int = 3) -> float:
+def round_sig(x: float, sig: int = 6) -> float:
     """Round to ``sig`` significant figures for stable JSON output."""
     if x == 0.0:
         return 0.0
@@ -59,18 +28,21 @@ def round_sig(x: float, sig: int = 3) -> float:
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", default="artifacts/baselines/norm_weights.json")
+    parser.add_argument("--baseline-metrics", default="artifacts/baselines/baseline_metrics.txt")
     parser.add_argument(
         "--scenes",
         nargs="+",
         default=["day", "night", "tunnel"],
-        help=(
-            "Which baseline scenes to include in the fit. "
-            "For a val-focused fit, pass --scenes day night."
-        ),
+        help="Which baseline scenes to include in the fit.",
     )
     args = parser.parse_args()
 
-    scenes = {s: BASELINE_PER_SCENE[s] for s in args.scenes}
+    baseline_path = Path(args.baseline_metrics)
+    if not baseline_path.is_absolute():
+        baseline_path = ROOT / baseline_path
+    baseline_per_scene = load_baseline_metrics_txt(baseline_path)
+
+    scenes = {s: baseline_per_scene[s] for s in args.scenes}
     n = len(scenes)
 
     vif_vals = [m["vif"] for m in scenes.values()]
@@ -81,8 +53,8 @@ def main():
     nrqm_mean = sum(nrqm_vals) / n
     unique_mean = sum(unique_vals) / n
 
-    a = 1.0
-    b = 1.0
+    a = 1.0 / NRQM_RANGE_MAX
+    b = 1.0 / UNIQUE_RANGE_MAX
 
     ranges = {
         "vif": {"min": min(vif_vals), "max": max(vif_vals)},
@@ -90,43 +62,39 @@ def main():
         "unique": {"min": min(unique_vals), "max": max(unique_vals)},
     }
 
-    def norm(metric: str, value: float) -> float:
-        lo = ranges[metric]["min"]
-        hi = ranges[metric]["max"]
-        value = (value - lo) / (hi - lo)
-        return max(0.0, min(1.0, value))
-
     per_scene_composite = {}
     for name, m in scenes.items():
-        term_vif = norm("vif", m["vif"])
-        term_nrqm = a * norm("nrqm", m["nrqm"])
-        term_unique = b * norm("unique", m["unique"])
+        vif_term = m["vif"]
+        a_nrqm_term = a * m["nrqm"]
+        b_unique_term = b * m["unique"]
         per_scene_composite[name] = {
-            "vif_norm": round_sig(term_vif, 4),
-            "a_nrqm_norm": round_sig(term_nrqm, 4),
-            "b_unique_norm": round_sig(term_unique, 4),
-            "composite": round_sig(term_vif + term_nrqm + term_unique, 4),
+            "vif_term": round_sig(vif_term, 4),
+            "a_nrqm_term": round_sig(a_nrqm_term, 4),
+            "b_unique_term": round_sig(b_unique_term, 4),
+            "composite": round_sig(vif_term + a_nrqm_term + b_unique_term, 4),
         }
 
     payload = {
         "description": (
-            "Composite score: VIF_norm + a*NRQM_norm + b*UNIQUE_norm, where "
-            "each raw metric is baseline min-max normalized and clamped to "
-            "[0, 1]. Raw pyiqa UNIQUE may be negative, so UNIQUE_norm is the "
-            "score term used for checkpoint selection and Optuna."
+            "Composite score: composite = vif + a * nrqm + b * unique. "
+            "The coefficients are chosen from the theoretical ranges of "
+            "the pyiqa metrics: a = 1 / NRQM_RANGE_MAX = 1/10 and "
+            "b = 1 / UNIQUE_RANGE_MAX = 1/3. With these, a * nrqm lies in "
+            "[0, 1] over the full NRQM range [0, 10], and b * unique lies "
+            "in [-1, 1] over the full UNIQUE range [-3, 3], giving a "
+            "symmetric penalty for degraded UNIQUE while keeping the "
+            "positive half mapped into [0, 1]. VIF enters without a "
+            "coefficient because it is already bounded in [0, 1]. The "
+            "composite has no upper cap: a model that exceeds the "
+            "theoretical metric maxima legitimately scores above 1.0 in "
+            "the corresponding term."
         ),
-        "source": "artifacts/baselines/baseline_metrics.txt",
+        "source": str(baseline_path.relative_to(ROOT)),
         "scenes_used": args.scenes,
         "baseline_means": {
             "vif": round_sig(vif_mean, 6),
             "nrqm": round_sig(nrqm_mean, 6),
             "unique": round_sig(unique_mean, 6),
-        },
-        "normalization": {
-            "mode": "baseline_minmax_clamped",
-            "formula": "m_norm = clamp((m - min_baseline) / (max_baseline - min_baseline), 0, 1)",
-            "weights": {"vif": 1.0, "nrqm": a, "unique": b},
-            "note": "raw UNIQUE can be negative; use unique_norm in the composite",
         },
         "baseline_minmax": {
             "vif": {
@@ -142,10 +110,18 @@ def main():
                 "max": round_sig(ranges["unique"]["max"], 6),
             },
         },
+        "metric_theoretical_range": {
+            "nrqm": {"min": 0.0, "max": NRQM_RANGE_MAX},
+            "unique": {"min": -UNIQUE_RANGE_MAX, "max": UNIQUE_RANGE_MAX},
+        },
+        "mode": COMPOSITE_MODE,
         "user_formula": {
-            "form": "composite = VIF_norm + a * NRQM_norm + b * UNIQUE_norm",
-            "a": round_sig(a, 4),
-            "b": round_sig(b, 4),
+            "form": "composite = vif + a * nrqm + b * unique",
+            "a": round_sig(a, 6),
+            "b": round_sig(b, 6),
+            "mode": COMPOSITE_MODE,
+            "a_choice": f"1 / {NRQM_RANGE_MAX} (NRQM theoretical max)",
+            "b_choice": f"1 / {UNIQUE_RANGE_MAX} (UNIQUE theoretical max)",
         },
         "per_scene_composite": per_scene_composite,
         "baseline_raw": {
@@ -163,19 +139,25 @@ def main():
         f.write("\n")
 
     print(f"Fit baseline: scenes={args.scenes}  n={n}")
+    print(f"  Source      = {baseline_path}")
     print(f"  VIF mean    = {vif_mean:.4f}")
     print(f"  NRQM mean   = {nrqm_mean:.4f}")
     print(f"  UNIQUE mean = {unique_mean:.4f}")
     print()
-    print(f"Chosen normalized weights: a = {a:.4f}   b = {b:.4f}")
-    print(f"Composite form: VIF_norm + {a:.3f}*NRQM_norm + {b:.3f}*UNIQUE_norm")
+    print("Theoretical metric ranges:")
+    print(f"  NRQM   in [0, {NRQM_RANGE_MAX}]")
+    print(f"  UNIQUE in [-{UNIQUE_RANGE_MAX}, +{UNIQUE_RANGE_MAX}]")
+    print()
+    print(f"Chosen weights: a = 1 / NRQM_RANGE_MAX   = {a:.6f}")
+    print(f"                b = 1 / UNIQUE_RANGE_MAX = {b:.6f}")
+    print(f"Composite form: vif + {a:.4f} * nrqm + {b:.4f} * unique")
     print()
     print("Per-scene composite at baseline:")
     for name, comp in per_scene_composite.items():
         print(
-            f"  {name:6s}: VIF_norm={comp['vif_norm']:.3f} "
-            f"+ a*NRQM_norm={comp['a_nrqm_norm']:.3f} "
-            f"+ b*UNIQUE_norm={comp['b_unique_norm']:.3f}  "
+            f"  {name:6s}: vif={comp['vif_term']:.3f} "
+            f"+ a*nrqm={comp['a_nrqm_term']:.3f} "
+            f"+ b*unique={comp['b_unique_term']:.3f}  "
             f"= {comp['composite']:.3f}"
         )
     print()

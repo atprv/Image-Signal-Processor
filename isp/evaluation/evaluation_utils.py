@@ -52,9 +52,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def load_split_items(splits_json_path: str, split_name: str) -> list[dict[str, Any]]:
-    """
-    Load eval items for a split and resolve relative paths to project-root paths.
-    """
+    """Load eval items for a split and resolve relative paths to project-root paths."""
     splits_path = Path(splits_json_path)
     if not splits_path.exists():
         raise FileNotFoundError(f"Split file not found: {splits_path}")
@@ -94,9 +92,7 @@ def load_split_items(splits_json_path: str, split_name: str) -> list[dict[str, A
 def limit_eval_items(
     eval_items: list[dict[str, Any]], max_frames: int | None
 ) -> list[dict[str, Any]]:
-    """
-    Keep only the first max_frames frames across all eval items.
-    """
+    """Keep only the first max_frames frames across all eval items."""
     items = deepcopy(eval_items)
 
     if max_frames is None:
@@ -155,9 +151,7 @@ def _coerce_uv_tensor(uv: torch.Tensor) -> torch.Tensor:
 def run_isp_frame(
     isp, raw_frame: torch.Tensor, width: int, height: int
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    """
-    Run ISP on one RAW frame and return planar Y and UV in float32 [0, 1].
-    """
+    """Run ISP on one RAW frame and return planar Y and UV in float32 [0, 1]."""
     if hasattr(isp, "forward_components"):
         components = isp.forward_components(raw_frame)
 
@@ -213,9 +207,7 @@ def run_isp_frame(
 def run_model_frame(
     model, y_isp: torch.Tensor, uv_isp: torch.Tensor
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    """
-    Run residual CNN on YUV444 and return planar YUV420 prediction.
-    """
+    """Run residual CNN on YUV444 and return planar YUV420 prediction."""
     if model is None:
         return y_isp, uv_isp
 
@@ -237,9 +229,7 @@ def run_model_frame(
 def compute_vif_from_raw_and_y(
     raw_frame: torch.Tensor, y_pred: torch.Tensor, pattern: str
 ) -> torch.Tensor:
-    """
-    Compute VIF between RAW CFA and predicted Y plane.
-    """
+    """Compute VIF between RAW CFA and predicted Y plane."""
     if raw_frame.ndim == 2:
         cfa = raw_frame.unsqueeze(0).unsqueeze(0)
     elif raw_frame.ndim == 4 and raw_frame.shape[1] == 1:
@@ -253,9 +243,7 @@ def compute_vif_from_raw_and_y(
 
 
 def init_iqa_metrics(device: str):
-    """
-    Initialize pyiqa metrics for no-reference evaluation.
-    """
+    """Initialize pyiqa metrics for no-reference evaluation."""
     if pyiqa is None:
         raise ModuleNotFoundError("pyiqa is not available, cannot compute NRQM/UNIQUE")
 
@@ -266,9 +254,7 @@ def init_iqa_metrics(device: str):
 
 
 def init_metric_sums(compute_iqa: bool) -> dict[str, Any]:
-    """
-    Create metric accumulators for total and per-scene averages.
-    """
+    """Create metric accumulators for total and per-scene averages."""
     return {
         "total": {
             "count": 0,
@@ -292,9 +278,7 @@ def update_metric_sums(
     nrqm: float | None,
     unique: float | None,
 ):
-    """
-    Add one frame worth of metric values to total and per-scene sums.
-    """
+    """Add one frame worth of metric values to total and per-scene sums."""
     compute_iqa = metric_sums["compute_iqa"]
 
     if scene_name not in metric_sums["per_scene"]:
@@ -318,9 +302,7 @@ def update_metric_sums(
 
 
 def finalize_metric_sums(metric_sums: dict[str, Any]) -> dict[str, Any]:
-    """
-    Convert metric sums into averages.
-    """
+    """Convert metric sums into averages."""
     compute_iqa = metric_sums["compute_iqa"]
 
     def finalize_scope(scope: dict[str, Any]) -> dict[str, Any]:
@@ -365,9 +347,7 @@ def evaluate(
     max_frames: int | None = None,
     verbose: bool = True,
 ) -> dict[str, Any]:
-    """
-    Evaluate ISP or ISP+CNN on selected frames from one or more scenes.
-    """
+    """Evaluate ISP or ISP+CNN on selected frames from one or more scenes."""
     if device == "cuda" and not torch.cuda.is_available():
         if verbose:
             print("Warning: CUDA requested but not available, falling back to CPU")
@@ -424,7 +404,7 @@ def evaluate(
                     NV12VideoReader(str(yuv_path), width, out_height, device=device) as yuv_reader,
                 ):
                     for (raw_frame, raw_number), (yuv_frame, yuv_number) in zip(
-                        raw_reader, yuv_reader, strict=False
+                        raw_reader, yuv_reader, strict=True
                     ):
                         if raw_number != yuv_number:
                             raise RuntimeError(
@@ -508,9 +488,7 @@ def evaluate_split(
     max_frames: int | None = None,
     verbose: bool = True,
 ) -> dict[str, Any]:
-    """
-    Convenience wrapper: load eval items from splits.json and evaluate them.
-    """
+    """Convenience wrapper: load eval items from splits.json and evaluate them."""
     eval_items = load_split_items(splits_json_path, split_name)
     return evaluate(
         isp=isp,

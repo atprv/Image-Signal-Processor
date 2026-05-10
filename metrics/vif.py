@@ -121,7 +121,7 @@ def vif(
     x, y = ref, dist
 
     # Multi-scale loop: mimic steerable-pyramid without explicit filters
-    for _scale in range(num_scales):
+    for _ in range(num_scales):
         x = (x - x.mean(dim=(2, 3))) / (x.std(dim=(2, 3)) + eps)
         y = (y - y.mean(dim=(2, 3))) / (y.std(dim=(2, 3)) + eps)
 

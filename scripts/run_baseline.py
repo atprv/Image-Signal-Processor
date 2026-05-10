@@ -2,27 +2,18 @@
 Recalculate baseline metrics for the current traditional ISP.
 """
 
+import sys
 import time
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
 import torch
 
-try:
-    from isp.config.config_reader import read_config
-    from isp.evaluation.evaluation_utils import evaluate
-    from isp.pipeline.pipeline import ISPPipeline
-except ModuleNotFoundError:
-    import sys
-
-    ROOT = Path(__file__).resolve().parents[1]
-    if str(ROOT) not in sys.path:
-        sys.path.insert(0, str(ROOT))
-
-    from isp.config.config_reader import read_config
-    from isp.evaluation.evaluation_utils import evaluate
-    from isp.pipeline.pipeline import ISPPipeline
-
-ROOT = Path(__file__).resolve().parents[1]
+from isp.config.config_reader import read_config
+from isp.evaluation.evaluation_utils import evaluate
+from isp.pipeline.pipeline import ISPPipeline
 
 ISP_PARAMS_DAY = {
     "denoise_eps": 1e-12,
@@ -35,7 +26,6 @@ ISP_PARAMS_DAY = {
     "post_denoise_eps": 0.001,
     "raw_y_full_blend": 0.4,
     "sharp_amount": 0.3,
-    "saturation": 1.2,
 }
 
 ISP_PARAMS_NIGHT = {
@@ -46,7 +36,7 @@ ISP_PARAMS_NIGHT = {
     "sharp_amount": 0.8,
 }
 
-ISP_PARAMS_TUNNEL = {}
+ISP_PARAMS_TUNNEL = dict(ISP_PARAMS_DAY)
 
 
 SCENES = [
@@ -144,7 +134,7 @@ def main():
     }
 
     print("\n" + "=" * 60)
-    print("BASELINE METRICS (per-scene ISP params, even=False)")
+    print("BASELINE METRICS (per-scene ISP params)")
     print("=" * 60)
     header = f"{'Metric':<10} {'Aggregate':>10} {'Day':>10} {'Night':>10} {'Tunnel':>10}"
     print(header)
@@ -161,7 +151,7 @@ def main():
     out_path = out_dir / "baseline_metrics.txt"
 
     with open(out_path, "w", encoding="utf-8") as f:
-        f.write("Baseline metrics (per-scene ISP params, VIF even=False)\n\n")
+        f.write("Baseline metrics (per-scene ISP params)\n\n")
         f.write("Run info\n")
         f.write(f"- device: {device}\n")
         f.write("- config: data/imx623.toml\n")

@@ -1,0 +1,84 @@
+{
+  "description": "Composite score: composite = vif + a * nrqm + b * unique. The coefficients are chosen from the theoretical ranges of the pyiqa metrics: a = 1 / NRQM_RANGE_MAX = 1/10 and b = 1 / UNIQUE_RANGE_MAX = 1/3. With these, a * nrqm lies in [0, 1] over the full NRQM range [0, 10], and b * unique lies in [-1, 1] over the full UNIQUE range [-3, 3], giving a symmetric penalty for degraded UNIQUE while keeping the positive half mapped into [0, 1]. VIF enters without a coefficient because it is already bounded in [0, 1]. The composite has no upper cap: a model that exceeds the theoretical metric maxima legitimately scores above 1.0 in the corresponding term.",
+  "source": "artifacts\\baselines\\baseline_metrics.txt",
+  "scenes_used": [
+    "day",
+    "night",
+    "tunnel"
+  ],
+  "baseline_means": {
+    "vif": 0.62531,
+    "nrqm": 6.91117,
+    "unique": 0.0890033
+  },
+  "baseline_minmax": {
+    "vif": {
+      "min": 0.557873,
+      "max": 0.7054
+    },
+    "nrqm": {
+      "min": 5.0548,
+      "max": 8.39656
+    },
+    "unique": {
+      "min": -0.010569,
+      "max": 0.164435
+    }
+  },
+  "metric_theoretical_range": {
+    "nrqm": {
+      "min": 0.0,
+      "max": 10.0
+    },
+    "unique": {
+      "min": -3.0,
+      "max": 3.0
+    }
+  },
+  "mode": "theoretical_range_scaled",
+  "user_formula": {
+    "form": "composite = vif + a * nrqm + b * unique",
+    "a": 0.1,
+    "b": 0.333333,
+    "mode": "theoretical_range_scaled",
+    "a_choice": "1 / 10.0 (NRQM theoretical max)",
+    "b_choice": "1 / 3.0 (UNIQUE theoretical max)"
+  },
+  "per_scene_composite": {
+    "day": {
+      "vif_term": 0.7054,
+      "a_nrqm_term": 0.5055,
+      "b_unique_term": 0.03771,
+      "composite": 1.249
+    },
+    "night": {
+      "vif_term": 0.5579,
+      "a_nrqm_term": 0.8397,
+      "b_unique_term": 0.05481,
+      "composite": 1.452
+    },
+    "tunnel": {
+      "vif_term": 0.6127,
+      "a_nrqm_term": 0.7282,
+      "b_unique_term": -0.003523,
+      "composite": 1.337
+    }
+  },
+  "baseline_raw": {
+    "day": {
+      "vif": 0.7054,
+      "nrqm": 5.054805,
+      "unique": 0.113144
+    },
+    "night": {
+      "vif": 0.557873,
+      "nrqm": 8.396557,
+      "unique": 0.164435
+    },
+    "tunnel": {
+      "vif": 0.612656,
+      "nrqm": 7.282162,
+      "unique": -0.010569
+    }
+  }
+}

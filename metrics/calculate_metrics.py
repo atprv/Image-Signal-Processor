@@ -70,11 +70,7 @@ def save_first_frame_visualization(
         rgb_np = rgb[0].permute(1, 2, 0).cpu().numpy()
 
         fig, axes = plt.subplots(2, 3, figsize=(15, 10))
-        fig.suptitle(
-            "First Frame - YUV to RGB Conversion Analysis",
-            fontsize=16,
-            fontweight="bold",
-        )
+        fig.suptitle("First Frame - YUV to RGB Conversion Analysis", fontsize=16, fontweight="bold")
 
         axes[0, 0].imshow(y_np, cmap="gray", vmin=0, vmax=255)
         axes[0, 0].set_title(f"Y Channel (Luma)\nRange: [{y_np.min():.0f}, {y_np.max():.0f}]")
@@ -97,13 +93,7 @@ def save_first_frame_visualization(
         axes[1, 0].axis("off")
 
         axes[1, 1].hist(rgb_np[:, :, 0].flatten(), bins=50, alpha=0.5, color="red", label="R")
-        axes[1, 1].hist(
-            rgb_np[:, :, 1].flatten(),
-            bins=50,
-            alpha=0.5,
-            color="green",
-            label="G",
-        )
+        axes[1, 1].hist(rgb_np[:, :, 1].flatten(), bins=50, alpha=0.5, color="green", label="G")
         axes[1, 1].hist(rgb_np[:, :, 2].flatten(), bins=50, alpha=0.5, color="blue", label="B")
         axes[1, 1].set_title("RGB Histogram")
         axes[1, 1].set_xlabel("Value")
@@ -272,7 +262,7 @@ def calculate_metrics(
                 cfa = raw_frame.unsqueeze(0).unsqueeze(0)
                 cfa_16bit = (cfa.float() * (65535.0 / 4095.0)).clamp(0, 65535).to(torch.int32)
 
-                vif_score = vif_cfa_to_y(cfa=cfa_16bit, y=y, pattern=pattern, even=True)
+                vif_score = vif_cfa_to_y(cfa=cfa_16bit, y=y, pattern=pattern, even=False)
 
                 rgb = nv12_uint8_to_rgb_bt709_full(y, u, v)
 
