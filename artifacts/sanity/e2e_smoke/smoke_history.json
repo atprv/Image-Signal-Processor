@@ -1,0 +1,256 @@
+[
+  {
+    "epoch": 0,
+    "isp_params": {
+      "ccm_matrix": [
+        [
+          1.60609996,
+          -0.45080999,
+          -0.15527
+        ],
+        [
+          -0.29631001,
+          1.53900003,
+          -0.2427
+        ],
+        [
+          0.034723,
+          -0.54650003,
+          1.51180005
+        ]
+      ],
+      "gamma": 2.19999993,
+      "ltm_a": 0.5,
+      "ltm_b": 0.0,
+      "ltm_eps": 0.001,
+      "ltm_target_mean": 0.0,
+      "ltm_detail_gain": 30.0,
+      "ltm_detail_threshold": 0.34999999,
+      "awb_max_gain": 4.0,
+      "awb_lum_mask_low": 0.0,
+      "awb_lum_mask_high": 1.0,
+      "hist_target_mean": 0.44499999,
+      "hist_target_std": 0.162,
+      "post_denoise_eps": 0.001,
+      "sharp_amount": 0.30000001,
+      "sharp_threshold": 0.01,
+      "denoise_eps": 0.0,
+      "raw_y_blend": 0.0,
+      "raw_y_full_blend": 0.40000001
+    }
+  },
+  {
+    "epoch": 1,
+    "train_loss": 7.34862614,
+    "train_l1y": 0.04851297,
+    "train_l1uv": 0.02347479,
+    "train_vif_monitor": 0.34096524,
+    "train_ms_ssim": 0.88612086,
+    "train_unique": -0.42726314,
+    "train_isp_anchor_reg": null,
+    "elapsed_s": 16.69635105,
+    "isp_params": {
+      "ccm_matrix": [
+        [
+          1.60619998,
+          -0.45071,
+          -0.15516999
+        ],
+        [
+          -0.29640999,
+          1.53890002,
+          -0.2428
+        ],
+        [
+          0.034623,
+          -0.54660004,
+          1.51170003
+        ]
+      ],
+      "gamma": 2.1995161,
+      "ltm_a": 0.50010002,
+      "ltm_b": 0.0001,
+      "ltm_eps": 0.0009999,
+      "ltm_target_mean": -0.0001,
+      "ltm_detail_gain": 29.99990082,
+      "ltm_detail_threshold": 0.35009998,
+      "awb_max_gain": 4.0,
+      "awb_lum_mask_low": 0.0001,
+      "awb_lum_mask_high": 1.00010002,
+      "hist_target_mean": 0.44509998,
+      "hist_target_std": 0.1619,
+      "post_denoise_eps": 0.0010001,
+      "sharp_amount": 0.29990003,
+      "sharp_threshold": 0.0099,
+      "denoise_eps": 0.0,
+      "raw_y_blend": 0.0001,
+      "raw_y_full_blend": 0.40009999
+    },
+    "grad_means": {
+      "ccm_grad_mean": 4.39015818,
+      "gamma_grad_mean": 7.55838776,
+      "cnn_head_grad_mean": 5.67216349,
+      "cnn_body_grad_mean": 1.9419558,
+      "cnn_tail_grad_mean": 46.82413864
+    },
+    "isp_params_sane": true,
+    "isp_sane_reason": "",
+    "val_loss": 0.29178854,
+    "val_l1y": 0.15803458,
+    "val_l1uv": 0.13375396,
+    "val_vif": 0.39401041,
+    "val_nrqm": 6.05338454,
+    "val_unique": -0.30948138,
+    "val_vif_term": 0.39401041,
+    "val_a_nrqm_term": 0.60533845,
+    "val_b_unique_term": -0.10316036,
+    "val_composite": 0.89618851,
+    "val_guarded_composite": 0.89618851,
+    "val_vif_guard_violation": 0.0,
+    "val_per_scene": {
+      "day": {
+        "l1_y": 0.08590779,
+        "l1_uv": 0.13975561,
+        "vif": 0.36631978,
+        "nrqm": 6.1131835,
+        "unique": 0.32556909,
+        "num_frames": 1,
+        "per_scene": {
+          "day": {
+            "l1_y": 0.08590779,
+            "l1_uv": 0.13975561,
+            "vif": 0.36631978,
+            "nrqm": 6.1131835,
+            "unique": 0.32556909,
+            "num_frames": 1
+          }
+        }
+      },
+      "night": {
+        "l1_y": 0.23016137,
+        "l1_uv": 0.12775232,
+        "vif": 0.42170104,
+        "nrqm": 5.99358559,
+        "unique": -0.94453186,
+        "num_frames": 1,
+        "per_scene": {
+          "night": {
+            "l1_y": 0.23016137,
+            "l1_uv": 0.12775232,
+            "vif": 0.42170104,
+            "nrqm": 5.99358559,
+            "unique": -0.94453186,
+            "num_frames": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "epoch": 2,
+    "train_loss": 7.7182951,
+    "train_l1y": 0.21755496,
+    "train_l1uv": 0.14994445,
+    "train_vif_monitor": 0.29839242,
+    "train_ms_ssim": 0.75655788,
+    "train_unique": -0.18214814,
+    "train_isp_anchor_reg": null,
+    "elapsed_s": 0.17273021,
+    "isp_params": {
+      "ccm_matrix": [
+        [
+          1.60626364,
+          -0.45063576,
+          -0.15508811
+        ],
+        [
+          -0.29634669,
+          1.53888357,
+          -0.24279533
+        ],
+        [
+          0.0345595,
+          -0.54667038,
+          1.51163256
+        ]
+      ],
+      "gamma": 2.19966361,
+      "ltm_a": 0.50006515,
+      "ltm_b": 0.00019814,
+      "ltm_eps": 0.00099987,
+      "ltm_target_mean": -0.0001066,
+      "ltm_detail_gain": 29.99981117,
+      "ltm_detail_threshold": 0.35016847,
+      "awb_max_gain": 4.0,
+      "awb_lum_mask_low": 0.00017457,
+      "awb_lum_mask_high": 1.00002563,
+      "hist_target_mean": 0.44519985,
+      "hist_target_std": 0.16195236,
+      "post_denoise_eps": 0.00100004,
+      "sharp_amount": 0.2999219,
+      "sharp_threshold": 0.0097999,
+      "denoise_eps": 0.0,
+      "raw_y_blend": 0.00013216,
+      "raw_y_full_blend": 0.40016785
+    },
+    "grad_means": {
+      "ccm_grad_mean": 1.06638038,
+      "gamma_grad_mean": 12.93808746,
+      "cnn_head_grad_mean": 1.51836979,
+      "cnn_body_grad_mean": 0.53225708,
+      "cnn_tail_grad_mean": 18.31656265
+    },
+    "isp_params_sane": true,
+    "isp_sane_reason": "",
+    "val_loss": 0.4176755,
+    "val_l1y": 0.2267941,
+    "val_l1uv": 0.1908814,
+    "val_vif": 0.44346336,
+    "val_nrqm": 6.08391333,
+    "val_unique": -0.41530153,
+    "val_vif_term": 0.44346336,
+    "val_a_nrqm_term": 0.60839133,
+    "val_b_unique_term": -0.13843371,
+    "val_composite": 0.91342098,
+    "val_guarded_composite": 0.91342098,
+    "val_vif_guard_violation": 0.0,
+    "val_per_scene": {
+      "day": {
+        "l1_y": 0.15604697,
+        "l1_uv": 0.20245497,
+        "vif": 0.43348613,
+        "nrqm": 6.13573217,
+        "unique": 0.23573166,
+        "num_frames": 1,
+        "per_scene": {
+          "day": {
+            "l1_y": 0.15604697,
+            "l1_uv": 0.20245497,
+            "vif": 0.43348613,
+            "nrqm": 6.13573217,
+            "unique": 0.23573166,
+            "num_frames": 1
+          }
+        }
+      },
+      "night": {
+        "l1_y": 0.29754123,
+        "l1_uv": 0.17930783,
+        "vif": 0.45344058,
+        "nrqm": 6.03209448,
+        "unique": -1.06633472,
+        "num_frames": 1,
+        "per_scene": {
+          "night": {
+            "l1_y": 0.29754123,
+            "l1_uv": 0.17930783,
+            "vif": 0.45344058,
+            "nrqm": 6.03209448,
+            "unique": -1.06633472,
+            "num_frames": 1
+          }
+        }
+      }
+    }
+  }
+]
