@@ -30,7 +30,6 @@ ISP_PARAMS = {
         post_denoise_eps=0.001,
         raw_y_full_blend=0.4,
         sharp_amount=0.3,
-        saturation=1.2,
     ),
     "night": dict(
         denoise_eps=1e-12, ltm_a=0.3, ltm_detail_gain=8, ltm_detail_threshold=0.4, sharp_amount=0.8
@@ -122,7 +121,7 @@ def main():
             write_start = 0
 
             for i in range(n):
-                raw_uint16 = h5_in["raw"][i]
+                raw_uint16 = h5_in["raw"][i]  # (H, W) uint16
                 scene_id = int(h5_in["scene_id"][i])
                 scene_name = SCENE_ID_TO_NAME.get(scene_id, "tunnel")
                 isp = isps[scene_name]

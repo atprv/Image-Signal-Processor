@@ -1,9 +1,5 @@
 """
 Evaluate the pretrained CNN warm-start checkpoint.
-
-This script does not train. It loads cnn_pretrained.pth, runs frozen ISP+CNN on
-the validation split, reports L1_Y/L1_UV/VIF/NRQM/UNIQUE, compares them against
-baseline, and saves a JSON report.
 """
 
 import argparse
@@ -22,7 +18,7 @@ from scripts.run_pretrain_cnn import BASELINE, run_per_scene_eval
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Evaluate pretrained CNN")
+    parser = argparse.ArgumentParser(description="Evaluate pretrained CNN warm-start checkpoint")
     parser.add_argument("--ckpt", default="artifacts/checkpoints/cnn_pretrained.pth")
     parser.add_argument("--config", default="data/imx623.toml")
     parser.add_argument("--splits-json", default="dataset/splits_mini.json")
@@ -33,7 +29,9 @@ def parse_args():
         choices=["same-split", "static"],
         default="same-split",
         help="same-split evaluates ISP-only on the same frames; "
-        "static uses the constants from run_pretrain_cnn.py",
+        "static uses the canonical full-scene baseline "
+        "loaded by run_pretrain_cnn.py from "
+        "artifacts/baselines/baseline_metrics.txt",
     )
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--output", default="artifacts/checkpoints/pretrain_eval_metrics.json")

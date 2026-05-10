@@ -1,14 +1,5 @@
 """
-Pretrain CNN on frozen ISP.
-
-Trains ResidualCNN for 20 epochs with ISP parameters frozen.
-Every eval_every epochs runs full-frame evaluation (VIF, NRQM, UNIQUE).
-Saves best checkpoint to artifacts/checkpoints/cnn_pretrained.pth.
-
-Supports two modes:
-  - Fast mode: uses precomputed ISP outputs from HDF5 (y_isp, uv_isp).
-    Run scripts/precompute_isp_outputs.py first.
-  - Slow mode: runs ISP per patch on every batch (fallback if no precomputed data).
+Pretrain the residual CNN on a frozen ISP.
 """
 
 import argparse
@@ -32,6 +23,7 @@ from tqdm import tqdm
 from isp.color.conversions import yuv420_to_yuv444, yuv444_to_yuv420
 from isp.config.config_reader import read_config
 from isp.data.dataset_utils import ISPDataset, create_dataloader
+from isp.evaluation.baseline_io import load_full_baseline
 from isp.evaluation.evaluation_utils import (
     evaluate,
     limit_eval_items,
@@ -53,47 +45,40 @@ ISP_PARAMS = {
         post_denoise_eps=0.001,
         raw_y_full_blend=0.4,
         sharp_amount=0.3,
-        saturation=1.2,
     ),
     "night": dict(
         denoise_eps=1e-12, ltm_a=0.3, ltm_detail_gain=8, ltm_detail_threshold=0.4, sharp_amount=0.8
     ),
-    "tunnel": {},
+    "tunnel": dict(
+        denoise_eps=1e-12,
+        ltm_a=0.5,
+        ltm_detail_gain=30,
+        ltm_detail_threshold=0.35,
+        hist_target_mean=0.445,
+        hist_target_std=0.162,
+        post_denoise_radius=4,
+        post_denoise_eps=0.001,
+        raw_y_full_blend=0.4,
+        sharp_amount=0.3,
+    ),
 }
 
-BASELINE = {
-    "day": {
-        "vif": 0.702358,
-        "nrqm": 5.227967,
-        "unique": 0.124453,
-        "l1_y": 0.048739,
-        "l1_uv": 0.023350,
-    },
-    "night": {
-        "vif": 0.519090,
-        "nrqm": 7.075381,
-        "unique": 0.135025,
-        "l1_y": 0.058578,
-        "l1_uv": 0.010266,
-    },
-    "tunnel": {
-        "vif": 0.693219,
-        "nrqm": 6.870870,
-        "unique": 0.076290,
-        "l1_y": 0.267548,
-        "l1_uv": 0.021035,
-    },
-}
+BASELINE, BASELINE_PATH = load_full_baseline(root=ROOT)
 
 
 def parse_args():
-    p = argparse.ArgumentParser(description="Pretrain CNN (ISP frozen)")
+    p = argparse.ArgumentParser(description="Pretrain residual CNN with frozen ISP")
     p.add_argument("--train-h5", default="dataset/train_patches.h5")
     p.add_argument("--splits-json", default="dataset/splits.json")
     p.add_argument("--config", default="data/imx623.toml")
     p.add_argument("--epochs", type=int, default=20)
     p.add_argument("--batch-size", type=int, default=16)
-    p.add_argument("--lr", type=float, default=1e-4, help="Learning rate")
+    p.add_argument(
+        "--lr",
+        type=float,
+        default=1e-4,
+        help="Learning rate (1e-4 chosen from the overfit sanity test)",
+    )
     p.add_argument("--lambda-uv", type=float, default=1.0)
     p.add_argument("--eval-every", type=int, default=5, help="Full evaluation every N epochs")
     p.add_argument(
@@ -259,7 +244,6 @@ def run_per_scene_eval(cnn, config, config_path, splits_json, split_name, device
 
 def print_eval_results(epoch, results, baseline):
     """Print per-scene eval results with baseline comparison."""
-    del epoch
     print(
         f"\n  {'Scene':<8s} {'VIF':>8s} {'dVIF':>8s} {'NRQM':>8s} {'dNRQM':>8s} "
         f"{'UNIQUE':>8s} {'dUNIQ':>8s} {'L1_Y':>8s} {'L1_UV':>8s}"
