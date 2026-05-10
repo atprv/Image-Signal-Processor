@@ -1,5 +1,5 @@
 """
-Overfit one batch with the quality-aligned loss.
+Single-batch overfit sanity test for the quality-aligned loss.
 """
 
 import argparse
@@ -24,7 +24,7 @@ from isp.color.conversions import (
 from isp.config.config_reader import read_config
 from isp.evaluation.composite_score import (
     compute_composite,
-    compute_normalized_terms,
+    compute_composite_terms,
     load_composite_config,
 )
 from isp.models.residual_cnn import ResidualCNN, count_trainable_parameters
@@ -48,10 +48,28 @@ def parse_args():
     parser.add_argument("--w-vif", type=float, default=0.3)
     parser.add_argument("--w-unique", type=float, default=0.3)
     parser.add_argument("--w-uv", type=float, default=0.1)
+    parser.add_argument(
+        "--w-l1-y", type=float, default=0.0, help="L1(Y) reference rail. 0 disables."
+    )
+
+    parser.add_argument(
+        "--w-vif-floor",
+        type=float,
+        default=0.0,
+        help="Asymmetric VIF floor penalty weight. 0 disables.",
+    )
+    parser.add_argument("--vif-target", type=float, default=0.7)
+    parser.add_argument(
+        "--w-unique-floor",
+        type=float,
+        default=0.0,
+        help="Asymmetric UNIQUE floor penalty weight. 0 disables.",
+    )
+    parser.add_argument("--unique-target", type=float, default=0.0)
     parser.add_argument("--norm-weights", type=str, default="artifacts/baselines/norm_weights.json")
     parser.add_argument("--device", type=str, default="cuda")
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--output-dir", type=str, default="artifacts/overfit_test")
+    parser.add_argument("--output-dir", type=str, default="artifacts/sanity/quality_overfit")
     return parser.parse_args()
 
 
@@ -193,7 +211,7 @@ def metric_row(
 
     vif = float(loss_dict["vif"].item())
     unique = float(loss_dict["unique"].item())
-    norm_terms = compute_normalized_terms(vif, nrqm, unique, composite_cfg)
+    composite_terms = compute_composite_terms(vif, nrqm, unique, composite_cfg)
     composite = compute_composite(vif, nrqm, unique, composite_cfg)
 
     row = {
@@ -203,9 +221,9 @@ def metric_row(
         "ms_ssim": float(loss_dict["ms_ssim"].item()),
         "vif": vif,
         "unique": unique,
-        "vif_norm": norm_terms["vif_norm"],
-        "nrqm_norm": norm_terms["nrqm_norm"],
-        "unique_norm": norm_terms["unique_norm"],
+        "vif_term": composite_terms["vif_term"],
+        "a_nrqm_term": composite_terms["a_nrqm_term"],
+        "b_unique_term": composite_terms["b_unique_term"],
         "nrqm": nrqm,
         "composite": float(composite),
         "l1_y": float(loss_dict["l1_y"].item()),
@@ -354,11 +372,11 @@ def save_history_csv(path: Path, rows: list[dict]):
         "loss",
         "ms_ssim",
         "vif",
-        "vif_norm",
-        "unique",
-        "unique_norm",
         "nrqm",
-        "nrqm_norm",
+        "unique",
+        "vif_term",
+        "a_nrqm_term",
+        "b_unique_term",
         "composite",
         "l1_y",
         "l1_uv",
@@ -384,11 +402,14 @@ def save_history_csv(path: Path, rows: list[dict]):
 def summarize_run(history: list[dict]) -> dict:
     start = history[0]
     final = history[-1]
+
+    vif_not_collapsed = final["vif"] >= 0.85 * start["vif"]
     return {
         "lr": final["lr"],
         "loss_decreased": final["loss"] < start["loss"],
         "ms_ssim_increased": final["ms_ssim"] > start["ms_ssim"],
         "vif_increased": final["vif"] > start["vif"],
+        "vif_not_collapsed": vif_not_collapsed,
         "unique_increased": final["unique"] > start["unique"],
         "l1_uv_not_increased": final["l1_uv"] <= start["l1_uv"],
         "composite_not_decreased": final["composite"] >= start["composite"],
@@ -438,6 +459,11 @@ def main():
         w_vif=args.w_vif,
         w_unique=args.w_unique,
         w_uv=args.w_uv,
+        w_l1_y=args.w_l1_y,
+        w_vif_floor=args.w_vif_floor,
+        vif_target=args.vif_target,
+        w_unique_floor=args.w_unique_floor,
+        unique_target=args.unique_target,
     )
     print(f"Quality weights: {weights}")
     print(
@@ -460,7 +486,6 @@ def main():
         post_denoise_eps=0.001,
         raw_y_full_blend=0.4,
         sharp_amount=0.3,
-        saturation=1.2,
     )
     freeze_module(isp)
 
@@ -515,8 +540,8 @@ def main():
         print(f"  loss:      {start['loss']:.6f} -> {final['loss']:.6f}")
         print(f"  MS-SSIM:   {start['ms_ssim']:.4f} -> {final['ms_ssim']:.4f}")
         print(f"  VIF:       {start['vif']:.4f} -> {final['vif']:.4f}")
-        print(f"  UNIQUE:    {start['unique']:.4f} -> {final['unique']:.4f} raw")
-        print(f"  UNIQUE_n:  {start['unique_norm']:.4f} -> {final['unique_norm']:.4f}")
+        print(f"  UNIQUE:    {start['unique']:.4f} -> {final['unique']:.4f}")
+        print(f"  b*UNIQUE:  {start['b_unique_term']:.4f} -> {final['b_unique_term']:.4f}")
         print(f"  L1_UV:     {start['l1_uv']:.6f} -> {final['l1_uv']:.6f}")
         print(f"  composite: {start['composite']:.4f} -> {final['composite']:.4f}")
         print(f"  CNN grads: {'OK' if summary['cnn_grads_present'] else 'MISSING'}")

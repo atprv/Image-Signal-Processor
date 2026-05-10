@@ -35,7 +35,6 @@ ISP_PARAMS_DAY = dict(
     post_denoise_eps=0.001,
     raw_y_full_blend=0.4,
     sharp_amount=0.3,
-    saturation=1.2,
 )
 
 
@@ -70,7 +69,7 @@ def main():
     ap.add_argument("--ckpt", default="artifacts/checkpoints/cnn_pretrained.pth")
     ap.add_argument("--batch-size", type=int, default=2)
     ap.add_argument("--device", default="cpu")
-    # Defaults match run_e2e_train.py --loss quality.
+
     ap.add_argument("--w-ssim", type=float, default=1.0)
     ap.add_argument("--w-vif", type=float, default=0.3)
     ap.add_argument("--w-unique", type=float, default=0.1)
@@ -100,7 +99,7 @@ def main():
         f"w_unique={args.w_unique}  w_l1_y={args.w_l1_y}  w_uv={args.w_uv}"
     )
 
-    print("\n[setup] Building ISP (day params) with unfrozen CCM/gamma/saturation...")
+    print("\n[setup] Building ISP (day params) with unfrozen CCM/gamma...")
     isp = ISPPipeline(config, device=device, **ISP_PARAMS_DAY)
     n_scalars = 0
     for _, p in isp.named_parameters():
@@ -140,9 +139,6 @@ def main():
     tracked = {
         "isp_ccm": isp.ccm.ccm if hasattr(isp, "ccm") else None,
         "isp_gamma": isp.gamma.inv_gamma if hasattr(isp, "gamma") else None,
-        "isp_saturation": (
-            isp.saturation_adjust.saturation if hasattr(isp, "saturation_adjust") else None
-        ),
         "cnn_head": cnn.head[0].weight if hasattr(cnn, "head") else None,
         "cnn_body0": (
             cnn.body[0].conv1.weight if hasattr(cnn, "body") and len(cnn.body) > 0 else None
@@ -195,7 +191,7 @@ def main():
     print()
     print("Raw term values (pre-weighting):")
     for name, val, _w, _in in terms:
-        tag = "  [quality loss]" if _in else "  [reference / v1 proxy]"
+        tag = "  [quality loss]" if _in else "  [reference / L1 proxy]"
         print(f"  {name:<8s}  value = {val.item():+.6f}{tag}")
 
     print()
@@ -281,11 +277,11 @@ def main():
     l1y = next((r for r in rows if r["term"] == "L1_Y"), None)
     l1uv = next((r for r in rows if r["term"] == "L1_UV"), None)
     if l1y and l1uv:
-        print("Reference (v1 proxy loss was L1_y + lambda_uv * L1_uv):")
+        print("Reference (L1 proxy loss was L1_y + lambda_uv * L1_uv):")
         print(f"  Unweighted CCM grad from L1_Y   = {_fmt(l1y['isp_ccm'])}")
         print(f"  Unweighted CCM grad from L1_UV  = {_fmt(l1uv['isp_ccm'])}")
         print("  If quality-loss weighted CCM grads sit in the same order of")
-        print("  magnitude as these, v1 learning rates should transfer.")
+        print("  magnitude as these, the L1-proxy learning rates should transfer.")
 
 
 if __name__ == "__main__":
