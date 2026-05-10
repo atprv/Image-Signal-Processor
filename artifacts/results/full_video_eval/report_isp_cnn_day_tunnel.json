@@ -1,0 +1,73 @@
+{
+  "checkpoint": "/content/ISP/artifacts/checkpoints/e2e_quality/e2e_best.pth",
+  "optuna_best_json": "/content/ISP/artifacts/checkpoints/optuna_tuning/optuna_best_params.json",
+  "mode": "isp_cnn",
+  "device": "cuda",
+  "scenes": [
+    "day",
+    "tunnel"
+  ],
+  "metric_stride": 1,
+  "compute_iqa": true,
+  "structural_overrides": {
+    "denoise_radius": 4,
+    "ltm_radius": 10,
+    "ltm_downsample": 0.25,
+    "post_denoise_radius": 0,
+    "sharp_radius": 1.0,
+    "raw_y_blur_radius": 3
+  },
+  "scene_render": {
+    "day": {
+      "scene": "day",
+      "output_yuv": "/content/full_video_eval_outputs/videos/day_isp_cnn.yuv",
+      "render_num_frames": 331,
+      "render_seconds": 141.08656073600014,
+      "render_fps": 2.3460774596339062,
+      "mode": "isp_cnn"
+    },
+    "tunnel": {
+      "scene": "tunnel",
+      "output_yuv": "/content/full_video_eval_outputs/videos/tunnel_isp_cnn.yuv",
+      "render_num_frames": 413,
+      "render_seconds": 178.33793012199976,
+      "render_fps": 2.3158281567890215,
+      "mode": "isp_cnn"
+    }
+  },
+  "scene_metrics": {
+    "day": {
+      "scene": "day",
+      "num_frames": 331,
+      "metric_stride": 1,
+      "l1_y": 0.08462852313889478,
+      "l1_uv": 0.03499898931793756,
+      "vif": 0.5386748023083563,
+      "nrqm": 7.165367584574258,
+      "unique": 0.8814416913107442,
+      "metric_seconds": 1698.348748053,
+      "composite": 1.5490251640554664
+    },
+    "tunnel": {
+      "scene": "tunnel",
+      "num_frames": 413,
+      "metric_stride": 1,
+      "l1_y": 0.08325979397711107,
+      "l1_uv": 0.034681205513727,
+      "vif": 0.5119243582426491,
+      "nrqm": 7.321676568315335,
+      "unique": 0.7600581223104537,
+      "metric_seconds": 2130.6945577140004,
+      "composite": 1.4974444691582933
+    }
+  },
+  "overall_metrics": {
+    "num_frames": 744,
+    "l1_y": 0.08386873127892613,
+    "l1_uv": 0.03482258513629917,
+    "vif": 0.5238254294600538,
+    "nrqm": 7.252135877968163,
+    "unique": 0.8140607585189163,
+    "composite": 1.5203923320762562
+  }
+}
