@@ -1,0 +1,129 @@
+{
+  "study_name": "isp_knobs",
+  "best_trial": 98,
+  "best_value": 1.9371970562162102,
+  "best_params": {
+    "denoise_radius": 4,
+    "ltm_radius": 10,
+    "ltm_downsample": 0.25,
+    "post_denoise_radius": 0,
+    "sharp_radius": 1.0,
+    "raw_y_blur_radius": 3
+  },
+  "best_user_attrs": {
+    "avg_composite": 1.9371970562162102,
+    "avg_composite_baseline_metric": 1.9371970562162102,
+    "avg_nrqm": 8.019906123479208,
+    "avg_unique": 1.263214518626531,
+    "avg_vif": 0.714135358730952,
+    "knobs": {
+      "denoise_radius": 4,
+      "ltm_radius": 10,
+      "ltm_downsample": 0.25,
+      "post_denoise_radius": 0,
+      "sharp_radius": 1.0,
+      "raw_y_blur_radius": 3
+    },
+    "per_scene": {
+      "day": {
+        "vif": 0.5272783637046814,
+        "nrqm": 7.745349089304606,
+        "unique": 0.9539613922437032,
+        "l1_y": 0.08075250933567683,
+        "l1_uv": 0.02818310757478078,
+        "composite": 1.6198000853959125,
+        "vif_term": 0.5272783637046814,
+        "a_nrqm_term": 0.7745349089304607,
+        "b_unique_term": 0.31798681276077034
+      },
+      "night": {
+        "vif": 0.9009923537572225,
+        "nrqm": 8.294463157653809,
+        "unique": 1.5724676450093586,
+        "l1_y": 0.21833870311578116,
+        "l1_uv": 0.025620702654123306,
+        "composite": 2.254594027036508,
+        "vif_term": 0.9009923537572225,
+        "a_nrqm_term": 0.8294463157653809,
+        "b_unique_term": 0.5241553575139045
+      }
+    }
+  },
+  "search_ranges": {
+    "denoise_radius": {
+      "kind": "int",
+      "low": 1,
+      "high": 4,
+      "log": false
+    },
+    "ltm_radius": {
+      "kind": "int",
+      "low": 4,
+      "high": 16,
+      "log": false
+    },
+    "ltm_downsample": {
+      "kind": "choice",
+      "choices": [
+        0.25,
+        0.5,
+        0.75,
+        1.0
+      ]
+    },
+    "post_denoise_radius": {
+      "kind": "int",
+      "low": 0,
+      "high": 6,
+      "log": false
+    },
+    "sharp_radius": {
+      "kind": "choice",
+      "choices": [
+        0.5,
+        1.0,
+        1.5,
+        2.0,
+        2.5,
+        3.0
+      ]
+    },
+    "raw_y_blur_radius": {
+      "kind": "int",
+      "low": 1,
+      "high": 16,
+      "log": false
+    }
+  },
+  "objective": "mean_over_scenes(VIF_norm + a*NRQM_norm + b*UNIQUE_norm) with the residual CNN frozen, the structural knobs sampled (no per-scene baseline), and the trained ISP weight tensors loaded from --ckpt.",
+  "ckpt": "/content/ISP/artifacts/checkpoints/e2e_quality/e2e_best.pth",
+  "construction_kwargs": {
+    "denoise_radius": 4,
+    "ltm_radius": 10,
+    "ltm_downsample": 0.25,
+    "post_denoise_radius": 0,
+    "sharp_radius": 1.0,
+    "raw_y_blur_radius": 3
+  },
+  "diff_trained_state_keys": [
+    "awb.lum_mask_high",
+    "awb.lum_mask_low",
+    "awb.max_gain",
+    "ccm.ccm",
+    "denoise.log_eps",
+    "gamma.inv_gamma",
+    "hist_norm.target_mean",
+    "hist_norm.target_std",
+    "ltm.a",
+    "ltm.b",
+    "ltm.detail_gain",
+    "ltm.detail_threshold",
+    "ltm.log_eps",
+    "ltm.target_mean",
+    "post_denoise.log_eps",
+    "rgb2yuv.raw_y_blend",
+    "rgb2yuv.raw_y_full_blend",
+    "sharpening.amount",
+    "sharpening.threshold"
+  ]
+}
