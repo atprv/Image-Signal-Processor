@@ -1,7 +1,7 @@
 # Full video render + metric report
 
 ## Run setup
-- mode: `isp_cnn`
+- mode: `e2e_optuna`
 - checkpoint: `/content/ISP/artifacts/checkpoints/e2e_quality/e2e_best.pth`
 - optuna overrides: `/content/ISP/artifacts/checkpoints/optuna_tuning/optuna_best_params.json`
 - device: `cuda`
@@ -20,9 +20,9 @@
 
 ## Per Scene
 ### day
-- output: `/content/full_video_eval_outputs/videos/day_isp_cnn.yuv`
+- output: `/content/full_video_eval_outputs/videos/day_e2e_optuna.yuv`
 - rendered frames: `331`
-- render FPS: `2.346`
+- render FPS: `2.282`
 - eval frames: `331`
 - L1_Y: `0.084629`
 - L1_UV: `0.034999`
@@ -32,9 +32,9 @@
 - Composite: `1.549025`
 
 ### tunnel
-- output: `/content/full_video_eval_outputs/videos/tunnel_isp_cnn.yuv`
+- output: `/content/full_video_eval_outputs/videos/tunnel_e2e_optuna.yuv`
 - rendered frames: `413`
-- render FPS: `2.316`
+- render FPS: `2.295`
 - eval frames: `413`
 - L1_Y: `0.083260`
 - L1_UV: `0.034681`

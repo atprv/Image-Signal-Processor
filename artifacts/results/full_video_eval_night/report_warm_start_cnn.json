@@ -1,0 +1,55 @@
+{
+  "variant": "warm_start_cnn",
+  "e2e_checkpoint": null,
+  "warm_checkpoint": "/content/ISP/artifacts/checkpoints/cnn_pretrain/cnn_pretrained.pth",
+  "optuna_best_json": null,
+  "device": "cuda",
+  "scenes": [
+    "night"
+  ],
+  "metric_stride": 1,
+  "compute_iqa": true,
+  "structural_overrides": {},
+  "scene_variant_overrides": {
+    "night": {
+      "denoise_eps": 1e-12,
+      "ltm_a": 0.3,
+      "ltm_detail_gain": 8,
+      "ltm_detail_threshold": 0.4,
+      "sharp_amount": 0.8
+    }
+  },
+  "scene_render": {
+    "night": {
+      "scene": "night",
+      "output_yuv": "/content/full_video_eval_outputs/videos/night_warm_start_cnn.yuv",
+      "render_num_frames": 1261,
+      "render_seconds": 545.6860103070003,
+      "render_fps": 2.3108527178304747,
+      "mode": "warm_start_cnn"
+    }
+  },
+  "scene_metrics": {
+    "night": {
+      "scene": "night",
+      "num_frames": 1261,
+      "metric_stride": 1,
+      "l1_y": 0.023348089910210548,
+      "l1_uv": 0.007852716740327137,
+      "vif": 0.3291070262984942,
+      "nrqm": 8.033608511834746,
+      "unique": -0.3111794725663127,
+      "metric_seconds": 6484.468721933,
+      "composite": 1.0287414903530223
+    }
+  },
+  "overall_metrics": {
+    "num_frames": 1261,
+    "l1_y": 0.023348089910210548,
+    "l1_uv": 0.007852716740327137,
+    "vif": 0.3291070262984942,
+    "nrqm": 8.033608511834746,
+    "unique": -0.3111794725663127,
+    "composite": 1.0287414903530223
+  }
+}

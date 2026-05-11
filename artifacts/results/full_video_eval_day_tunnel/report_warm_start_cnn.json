@@ -1,0 +1,93 @@
+{
+  "variant": "warm_start_cnn",
+  "e2e_checkpoint": null,
+  "warm_checkpoint": "/content/ISP/artifacts/checkpoints/cnn_pretrain/cnn_pretrained.pth",
+  "optuna_best_json": null,
+  "device": "cuda",
+  "scenes": [
+    "day",
+    "tunnel"
+  ],
+  "metric_stride": 1,
+  "compute_iqa": true,
+  "structural_overrides": {},
+  "scene_variant_overrides": {
+    "day": {
+      "denoise_eps": 1e-12,
+      "ltm_a": 0.5,
+      "ltm_detail_gain": 30,
+      "ltm_detail_threshold": 0.35,
+      "hist_target_mean": 0.445,
+      "hist_target_std": 0.162,
+      "post_denoise_radius": 4,
+      "post_denoise_eps": 0.001,
+      "raw_y_full_blend": 0.4,
+      "sharp_amount": 0.3
+    },
+    "tunnel": {
+      "denoise_eps": 1e-12,
+      "ltm_a": 0.5,
+      "ltm_detail_gain": 30,
+      "ltm_detail_threshold": 0.35,
+      "hist_target_mean": 0.445,
+      "hist_target_std": 0.162,
+      "post_denoise_radius": 4,
+      "post_denoise_eps": 0.001,
+      "raw_y_full_blend": 0.4,
+      "sharp_amount": 0.3
+    }
+  },
+  "scene_render": {
+    "day": {
+      "scene": "day",
+      "output_yuv": "/content/full_video_eval_outputs/videos/day_warm_start_cnn.yuv",
+      "render_num_frames": 331,
+      "render_seconds": 142.8476023079993,
+      "render_fps": 2.317154748501259,
+      "mode": "warm_start_cnn"
+    },
+    "tunnel": {
+      "scene": "tunnel",
+      "output_yuv": "/content/full_video_eval_outputs/videos/tunnel_warm_start_cnn.yuv",
+      "render_num_frames": 413,
+      "render_seconds": 182.1600051079995,
+      "render_fps": 2.2672375297483085,
+      "mode": "warm_start_cnn"
+    }
+  },
+  "scene_metrics": {
+    "day": {
+      "scene": "day",
+      "num_frames": 331,
+      "metric_stride": 1,
+      "l1_y": 0.06519683807232948,
+      "l1_uv": 0.0155657501075293,
+      "vif": 0.3463400865249403,
+      "nrqm": 6.065709445411705,
+      "unique": 0.14549743141585067,
+      "metric_seconds": 1703.245817776,
+      "composite": 1.0014101263722506
+    },
+    "tunnel": {
+      "scene": "tunnel",
+      "num_frames": 413,
+      "metric_stride": 1,
+      "l1_y": 0.07271729598214205,
+      "l1_uv": 0.016842233384654973,
+      "vif": 0.26299625779468266,
+      "nrqm": 6.936022425967902,
+      "unique": 0.1497041189560518,
+      "metric_seconds": 2137.460878539,
+      "composite": 1.0064998234754505
+    }
+  },
+  "overall_metrics": {
+    "num_frames": 744,
+    "l1_y": 0.06937150086366362,
+    "l1_uv": 0.016274335582600406,
+    "vif": 0.3000752998776333,
+    "nrqm": 6.548826731661315,
+    "unique": 0.14783259533265586,
+    "composite": 1.004235455543785
+  }
+}

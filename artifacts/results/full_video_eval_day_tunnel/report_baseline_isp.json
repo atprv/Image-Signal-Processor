@@ -1,0 +1,93 @@
+{
+  "variant": "baseline_isp",
+  "e2e_checkpoint": null,
+  "warm_checkpoint": null,
+  "optuna_best_json": null,
+  "device": "cuda",
+  "scenes": [
+    "day",
+    "tunnel"
+  ],
+  "metric_stride": 1,
+  "compute_iqa": true,
+  "structural_overrides": {},
+  "scene_variant_overrides": {
+    "day": {
+      "denoise_eps": 1e-12,
+      "ltm_a": 0.5,
+      "ltm_detail_gain": 30,
+      "ltm_detail_threshold": 0.35,
+      "hist_target_mean": 0.445,
+      "hist_target_std": 0.162,
+      "post_denoise_radius": 4,
+      "post_denoise_eps": 0.001,
+      "raw_y_full_blend": 0.4,
+      "sharp_amount": 0.3
+    },
+    "tunnel": {
+      "denoise_eps": 1e-12,
+      "ltm_a": 0.5,
+      "ltm_detail_gain": 30,
+      "ltm_detail_threshold": 0.35,
+      "hist_target_mean": 0.445,
+      "hist_target_std": 0.162,
+      "post_denoise_radius": 4,
+      "post_denoise_eps": 0.001,
+      "raw_y_full_blend": 0.4,
+      "sharp_amount": 0.3
+    }
+  },
+  "scene_render": {
+    "day": {
+      "scene": "day",
+      "output_yuv": "/content/full_video_eval_outputs/videos/day_baseline_isp.yuv",
+      "render_num_frames": 331,
+      "render_seconds": 23.84710523600006,
+      "render_fps": 13.880091387373755,
+      "mode": "baseline_isp"
+    },
+    "tunnel": {
+      "scene": "tunnel",
+      "output_yuv": "/content/full_video_eval_outputs/videos/tunnel_baseline_isp.yuv",
+      "render_num_frames": 413,
+      "render_seconds": 27.52546679199986,
+      "render_fps": 15.004286870805634,
+      "mode": "baseline_isp"
+    }
+  },
+  "scene_metrics": {
+    "day": {
+      "scene": "day",
+      "num_frames": 331,
+      "metric_stride": 1,
+      "l1_y": 0.0532072962590935,
+      "l1_uv": 0.01199672050110073,
+      "vif": 0.6840434250874822,
+      "nrqm": 6.32026111539397,
+      "unique": 0.01563496166260581,
+      "metric_seconds": 1702.0231554770003,
+      "composite": 1.3212811853027604
+    },
+    "tunnel": {
+      "scene": "tunnel",
+      "num_frames": 413,
+      "metric_stride": 1,
+      "l1_y": 0.06155902944667576,
+      "l1_uv": 0.012251304769234564,
+      "vif": 0.6005064046989053,
+      "nrqm": 6.964818504185711,
+      "unique": -0.06384984677607874,
+      "metric_seconds": 2135.3624379010002,
+      "composite": 1.2757049941420657
+    }
+  },
+  "overall_metrics": {
+    "num_frames": 744,
+    "l1_y": 0.057843406214028274,
+    "l1_uv": 0.012138042144567495,
+    "vif": 0.6376713962965114,
+    "nrqm": 6.678059773419493,
+    "unique": -0.028487653774459675,
+    "composite": 1.2959814985428586
+  }
+}

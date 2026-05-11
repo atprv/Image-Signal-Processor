@@ -1,0 +1,49 @@
+{
+  "variant": "e2e",
+  "e2e_checkpoint": "/content/ISP/artifacts/checkpoints/e2e_quality/e2e_best.pth",
+  "warm_checkpoint": null,
+  "optuna_best_json": null,
+  "device": "cuda",
+  "scenes": [
+    "night"
+  ],
+  "metric_stride": 1,
+  "compute_iqa": true,
+  "structural_overrides": {},
+  "scene_variant_overrides": {
+    "night": {}
+  },
+  "scene_render": {
+    "night": {
+      "scene": "night",
+      "output_yuv": "/content/full_video_eval_outputs/videos/night_e2e.yuv",
+      "render_num_frames": 1261,
+      "render_seconds": 557.1695475430006,
+      "render_fps": 2.2632249116283227,
+      "mode": "e2e"
+    }
+  },
+  "scene_metrics": {
+    "night": {
+      "scene": "night",
+      "num_frames": 1261,
+      "metric_stride": 1,
+      "l1_y": 0.23336352175138567,
+      "l1_uv": 0.024139211372037336,
+      "vif": 0.9474050114780641,
+      "nrqm": 8.065421313543721,
+      "unique": 1.1967092895677975,
+      "metric_seconds": 6422.197533598999,
+      "composite": 2.152849840451939
+    }
+  },
+  "overall_metrics": {
+    "num_frames": 1261,
+    "l1_y": 0.23336352175138567,
+    "l1_uv": 0.024139211372037336,
+    "vif": 0.9474050114780641,
+    "nrqm": 8.065421313543721,
+    "unique": 1.1967092895677975,
+    "composite": 2.152849840451939
+  }
+}

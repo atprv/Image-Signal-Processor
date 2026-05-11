@@ -1,7 +1,8 @@
 {
-  "checkpoint": "/content/ISP/artifacts/checkpoints/e2e_quality/e2e_best.pth",
+  "variant": "e2e_optuna",
+  "e2e_checkpoint": "/content/ISP/artifacts/checkpoints/e2e_quality/e2e_best.pth",
+  "warm_checkpoint": null,
   "optuna_best_json": "/content/ISP/artifacts/checkpoints/optuna_tuning/optuna_best_params.json",
-  "mode": "isp_cnn",
   "device": "cuda",
   "scenes": [
     "day",
@@ -17,22 +18,40 @@
     "sharp_radius": 1.0,
     "raw_y_blur_radius": 3
   },
+  "scene_variant_overrides": {
+    "day": {
+      "denoise_radius": 4,
+      "ltm_radius": 10,
+      "ltm_downsample": 0.25,
+      "post_denoise_radius": 0,
+      "sharp_radius": 1.0,
+      "raw_y_blur_radius": 3
+    },
+    "tunnel": {
+      "denoise_radius": 4,
+      "ltm_radius": 10,
+      "ltm_downsample": 0.25,
+      "post_denoise_radius": 0,
+      "sharp_radius": 1.0,
+      "raw_y_blur_radius": 3
+    }
+  },
   "scene_render": {
     "day": {
       "scene": "day",
-      "output_yuv": "/content/full_video_eval_outputs/videos/day_isp_cnn.yuv",
+      "output_yuv": "/content/full_video_eval_outputs/videos/day_e2e_optuna.yuv",
       "render_num_frames": 331,
-      "render_seconds": 141.08656073600014,
-      "render_fps": 2.3460774596339062,
-      "mode": "isp_cnn"
+      "render_seconds": 145.05342565299907,
+      "render_fps": 2.2819178417187307,
+      "mode": "e2e_optuna"
     },
     "tunnel": {
       "scene": "tunnel",
-      "output_yuv": "/content/full_video_eval_outputs/videos/tunnel_isp_cnn.yuv",
+      "output_yuv": "/content/full_video_eval_outputs/videos/tunnel_e2e_optuna.yuv",
       "render_num_frames": 413,
-      "render_seconds": 178.33793012199976,
-      "render_fps": 2.3158281567890215,
-      "mode": "isp_cnn"
+      "render_seconds": 179.97872690199983,
+      "render_fps": 2.2947156428375144,
+      "mode": "e2e_optuna"
     }
   },
   "scene_metrics": {
@@ -45,7 +64,7 @@
       "vif": 0.5386748023083563,
       "nrqm": 7.165367584574258,
       "unique": 0.8814416913107442,
-      "metric_seconds": 1698.348748053,
+      "metric_seconds": 1713.5964758409991,
       "composite": 1.5490251640554664
     },
     "tunnel": {
@@ -57,7 +76,7 @@
       "vif": 0.5119243582426491,
       "nrqm": 7.321676568315335,
       "unique": 0.7600581223104537,
-      "metric_seconds": 2130.6945577140004,
+      "metric_seconds": 2140.465839335,
       "composite": 1.4974444691582933
     }
   },
